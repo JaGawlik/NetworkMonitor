@@ -15,22 +15,28 @@ namespace NetworkMonitor
             base.OnStartup(e);
 
             string host = "localhost";
-            int port = 5432;
+            int port = 5433;
             string user = "postgres";
-            string password = "secure_password";
+            string password = "postgres";
             string initialDatabase = "postgres";
             string targetDb = "ids_system";
 
-            // Connection string do bazy bazowej
+            string snortLogPath = @"C:\Snort\log\alert.ids";
+
+            //Connection do bazowej bazy
             string initialConnectionString = $"Host={host};Port={port};Username={user};Password={password};Database={initialDatabase}";
-            // Connection string do docelowej bazy
+            //Connectiondo docelowej bazy
             string targetConnectionString = $"Host={host};Port={port};Username={user};Password={password};Database={targetDb}";
 
-            // Tworzymy bazę jeśli nie istnieje
+            //Tworzenie bazy gdy nie istnieje
             DatabaseInit.EnsureDatabaseExists(initialConnectionString, targetDb);
 
-            // Tworzymy tabele
+            //Tworzymy tabele
             DatabaseInit.CreateTables(targetConnectionString);
+
+            var monitor = new Snort.SnortAlertMonitor(snortLogPath, targetConnectionString);
+            Task.Run(() => monitor.StartMonitoringAsync());
+
         }
     }
 
