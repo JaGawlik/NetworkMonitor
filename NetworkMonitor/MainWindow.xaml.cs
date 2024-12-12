@@ -76,7 +76,6 @@ namespace NetworkMonitor
             {
                 _lastMaxId = newAlerts.Max(a => a.Id);
 
-                // Dodaj nowe alerty do kolekcji
                 foreach (var alert in newAlerts)
                 {
                     var existingGroup = AlertGroups.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
@@ -95,7 +94,6 @@ namespace NetworkMonitor
                     }
                 }
 
-                // Upewnij się, że grupy są posortowane po czasie (opcjonalnie)
                 SortGroupsByLatestAlert();
             }
             //SortAlerts();
