@@ -11,13 +11,13 @@ namespace NetworkMonitor.Snort
 {
     internal class SnortManager
     {
-        public static bool StartSnort(string snortPath, string arguments)
+        public static Process StartSnort(string snortPath, string arguments)
         {
             if (!File.Exists(snortPath))
             {
                 MessageBox.Show("Nie znaleziono pliku snort.exe w podanej lokalizacji. Aplikacja zostanie zamknięta.");
                 Application.Current.Shutdown();
-                return false;
+                return null;
             }
 
             var startInfo = new ProcessStartInfo()
@@ -37,12 +37,12 @@ namespace NetworkMonitor.Snort
             if (started)
             {
                 Console.WriteLine("Snort został uruchomiony.");
-                return true;
+                return snortProcess;
             }
             else
             {
                 Console.WriteLine("Nie udało się uruchomić Snorta.");
-                return false;
+                return snortProcess;
             }
         }
     
