@@ -25,16 +25,18 @@ namespace NetworkMonitor
         private DispatcherTimer _timer;
         private int _lastMaxId = 0;
 
+        private User CurrentUser { get; set; }
+
         public ObservableCollection<AlertGroup> AlertGroups { get; set; }
-        public MainWindow()
+        public MainWindow(User user, string connectionString)
         {
             InitializeComponent();
 
-            _connectionString = ((App)Application.Current).DBConnectionString;
+            CurrentUser = user;
+            _connectionString = connectionString;
 
             AlertGroups = new ObservableCollection<AlertGroup>();
-
-            DataContext = this;
+            DataContext = this; 
 
             LoadAlerts();
 
@@ -50,39 +52,50 @@ namespace NetworkMonitor
         {
             var allAlerts = AlertRepository.GetAlerts(_connectionString);
 
-            if (allAlerts.Any())
+            if (CurrentUser.Role == "user")
             {
-                _lastMaxId = allAlerts.Max(a => a.Id);
+                // Filtrowanie dla zwykłych użytkowników
+                allAlerts = allAlerts
+                    .Where(a => a.DestinationIp == CurrentUser.AssignedIp)
+                    .ToList();
             }
 
-            var groupedAlerts = GroupAlertsByDestinationIp(allAlerts);
+            var groupedAlerts = allAlerts
+                .GroupBy(a => a.DestinationIp)
+                .Select(group => new AlertGroup
+                {
+                    DestinationIp = group.Key,
+                    Alerts = group.ToList()
+                });
 
-            AlertGroups.Clear();
             foreach (var group in groupedAlerts)
             {
                 AlertGroups.Add(group);
             }
-
-            //SortAlerts();
         }
 
         private void CheckForNewAlerts(object sender, EventArgs e)
         {
             var newAlerts = AlertRepository.GetAlerts(_connectionString)
-                                   .Where(a => a.Id > _lastMaxId)
-                                   .ToList();
+                                           .Where(a => a.Id > _lastMaxId)
+                                           .ToList();
 
             if (newAlerts.Any())
             {
+                Console.WriteLine($"Znaleziono {newAlerts.Count} nowych alertów.");
                 _lastMaxId = newAlerts.Max(a => a.Id);
 
                 foreach (var alert in newAlerts)
                 {
+                    Console.WriteLine($"Nowy alert: {alert.AlertMessage} do {alert.DestinationIp}");
                     var existingGroup = AlertGroups.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
 
                     if (existingGroup != null)
                     {
-                        existingGroup.Alerts.Add(alert);
+                        if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
+                        {
+                            existingGroup.Alerts.Add(alert);
+                        }
                     }
                     else
                     {
@@ -94,10 +107,19 @@ namespace NetworkMonitor
                     }
                 }
 
+                RemoveEmptyGroups();
                 SortGroupsByLatestAlert();
             }
-            //SortAlerts();
-            
+        }
+
+
+        private void RemoveEmptyGroups()
+        {
+            var emptyGroups = AlertGroups.Where(g => !g.Alerts.Any()).ToList();
+            foreach (var group in emptyGroups)
+            {
+                AlertGroups.Remove(group);
+            }
         }
 
         private void SortGroupsByLatestAlert()
@@ -112,27 +134,6 @@ namespace NetworkMonitor
                 AlertGroups.Add(group);
             }
         }
-        private void SortAlerts()
-        {
-            var sortedAlerts = Alerts.OrderByDescending(a => a.Timestamp).ToList();
 
-            Alerts.Clear();
-            foreach (var alert in sortedAlerts)
-            {
-                Alerts.Add(alert);
-            }
-        }
-
-        private List<AlertGroup> GroupAlertsByDestinationIp(List<Alert> alerts)
-        {
-            return alerts
-                .GroupBy(a => a.DestinationIp)
-                .Select(group => new AlertGroup
-                {
-                    DestinationIp = group.Key,
-                    Alerts = group.ToList()
-                })
-                .ToList();
-        }
     }
 }
