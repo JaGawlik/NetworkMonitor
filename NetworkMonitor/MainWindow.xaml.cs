@@ -30,15 +30,23 @@ namespace NetworkMonitor
         public ObservableCollection<AlertGroup> AlertGroups { get; set; }
         public MainWindow(User user, string connectionString)
         {
+            if (user == null)
+                throw new ArgumentNullException(nameof(user), "User cannot be null.");
+            if (string.IsNullOrEmpty(connectionString))
+                throw new ArgumentNullException(nameof(connectionString), "Connection string cannot be null or empty.");
+
             InitializeComponent();
 
             CurrentUser = user;
             _connectionString = connectionString;
 
+           
             AlertGroups = new ObservableCollection<AlertGroup>();
-            DataContext = this; 
+
+            DataContext = this;
 
             LoadAlerts();
+                   
 
             _timer = new DispatcherTimer
             {

@@ -29,6 +29,9 @@ namespace NetworkMonitor.Database
                     Console.WriteLine($"Baza danych '{dbName}' już istnieje.");
                 }
             }
+
+            string targetConnectionString = connectionString.Replace("Database=postgres", $"Database={dbName}");
+            CreateTables(targetConnectionString);
         }
 
         public static void CreateTables(string connectionString)
@@ -53,8 +56,9 @@ namespace NetworkMonitor.Database
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
                     username VARCHAR(50) UNIQUE NOT NULL,
-                    password_hash VARCHAR(255) NOT NULL,
-                    role VARCHAR(20) DEFAULT 'user'
+                    password VARCHAR(255) NOT NULL,
+                    role VARCHAR(20) DEFAULT 'user',
+                    assigned_ip VARCHAR(50)
                 );
             ";
 

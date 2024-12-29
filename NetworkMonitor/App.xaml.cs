@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using NetworkMonitor.Database;
 using NetworkMonitor.Model;
+using NetworkMonitor.Repository;
 
 namespace NetworkMonitor
 {
@@ -31,8 +32,19 @@ namespace NetworkMonitor
             string initialConnectionString = $"Host={host};Port={port};Username={dbUser};Password={password};Database={initialDatabase}";
             DatabaseInit.EnsureDatabaseExists(initialConnectionString, targetDb);
 
+            // Sprawdzanie użytkowników w bazie
+            if (!UserRepository.HasUsers(DBConnectionString))
+            {
+                var addUserWindow = new AddUserWindow(DBConnectionString);
+                if (addUserWindow.ShowDialog() != true)
+                {
+                    Shutdown(); // Zamknij aplikację, jeśli użytkownik nie dodał administratora
+                    return;
+                }
+            }
+
             // Otwarcie okna logowania
-            var loginWindow = new LoginWindow();
+            var loginWindow = new LoginWindow(DBConnectionString);
             if (loginWindow.ShowDialog() == true)
             {
                 var user = loginWindow.LoggedUser;
@@ -54,7 +66,7 @@ namespace NetworkMonitor
         {
             string snortLogPath = @"C:\Snort\log\alert.ids";
             string snortPath = @"C:\Snort\bin\snort.exe";
-            string arguments = "-i 6 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
+            string arguments = "-i 7 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
 
             _snortProcess = Snort.SnortManager.StartSnort(snortPath, arguments);
 

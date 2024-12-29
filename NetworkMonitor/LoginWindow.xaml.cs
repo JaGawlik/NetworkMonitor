@@ -6,10 +6,13 @@ namespace NetworkMonitor
 {
     public partial class LoginWindow : Window
     {
+        private readonly string _connectionString;
+        //private readonly string _connectionString = ((App)Application.Current).DBConnectionString;
         public User LoggedUser { get; private set; }
-        public LoginWindow()
+        public LoginWindow(string connectionString)
         {
             InitializeComponent();
+            _connectionString = connectionString;
         }
 
 
@@ -18,7 +21,8 @@ namespace NetworkMonitor
             string username = UsernameTextBox.Text;
             string password = PasswordBox.Password;
 
-            LoggedUser = UserRepository.Authenticate(username, password);
+
+            LoggedUser = UserRepository.Authenticate(_connectionString, username, password);
             if (LoggedUser != null)
             {
                 DialogResult = true; // Zamknij okno logowania i kontynuuj

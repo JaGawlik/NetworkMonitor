@@ -1,0 +1,15 @@
+﻿<Window x:Class="NetworkMonitor.AddUserWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dodaj użytkownika" Height="300" Width="400">
+    <Grid Margin="20">
+        <StackPanel>
+            <TextBlock Text="Nazwa użytkownika" />
+            <TextBox x:Name="UsernameTextBox" Margin="0,5" />
+            <TextBlock Text="Hasło" />
+            <PasswordBox x:Name="PasswordBox" Margin="0,5" />
+            <Button Content="Dodaj użytkownika" Click="AddUserButton_Click" Margin="0,10" />
+            <TextBlock x:Name="ErrorText" Foreground="Red" Visibility="Collapsed" />
+        </StackPanel>
+    </Grid>
+</Window>
