@@ -10,7 +10,7 @@ namespace NetworkMonitor.Model
     {
         public int Id { get; set; }
         public string Username { get; set; }
-        public string Password { get; set; } // Używaj hashowania w produkcji
+        public string Password { get; set; } 
         public string Role { get; set; } 
         public string AssignedIp { get; set; }
     }

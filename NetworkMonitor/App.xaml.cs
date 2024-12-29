@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using System.Windows;
 using NetworkMonitor.Database;
@@ -16,23 +17,25 @@ namespace NetworkMonitor
         public string DBConnectionString { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
-        {
-           
+        {            
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
                 if (args.ExceptionObject is Exception ex)
                 {
+                    Console.WriteLine($"Unhandled exception: {ex.Message}\n{ex.StackTrace}");
                     MessageBox.Show($"Unhandled exception: {ex.Message}\n{ex.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
 
             DispatcherUnhandledException += (sender, args) =>
             {
+                Console.WriteLine($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}");
                 MessageBox.Show($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 args.Handled = true;
             };
 
             base.OnStartup(e);
+
 
             string host = "localhost";
             int port = 5432;
@@ -43,39 +46,47 @@ namespace NetworkMonitor
 
             DBConnectionString = $"Host={host};Port={port};Username={dbUser};Password={password};Database={targetDb}";
 
-            // Tworzenie bazy danych
+           // Tworzenie bazy danych
             string initialConnectionString = $"Host={host};Port={port};Username={dbUser};Password={password};Database={initialDatabase}";
             DatabaseInit.EnsureDatabaseExists(initialConnectionString, targetDb);
 
-            // Sprawdzanie użytkowników w bazie
+            //Sprawdzanie użytkowników w bazie
             if (!UserRepository.HasUsers(DBConnectionString))
             {
                 var addUserWindow = new AddUserWindow(DBConnectionString);
                 if (addUserWindow.ShowDialog() != true)
                 {
-                    Shutdown(); // Zamknij aplikację, jeśli użytkownik nie dodał administratora
+                    Shutdown(); 
                     return;
                 }
             }
 
-            // Otwarcie okna logowania
-            var loginWindow = new LoginWindow(DBConnectionString);
+            //Otwarcie okna logowania
+           var loginWindow = new LoginWindow(DBConnectionString);
             if (loginWindow.ShowDialog() == true)
             {
                 var user = loginWindow.LoggedUser;
 
-                // Uruchamianie Snorta i monitorowanie alertów po zalogowaniu
+                //Uruchamianie Snorta i monitorowanie alertów po zalogowaniu
                 InitializeSnortAndMonitoring();
 
-                // Otwieranie głównego okna
-                var mainWindow = new MainWindow(user, DBConnectionString);               
+
+                //Otwieranie głównego okna
+               var mainWindow = new MainWindow(user, DBConnectionString);
+
+                Application.Current.MainWindow = mainWindow;
                 mainWindow.Show();
+                Console.WriteLine("OnStartup: MainWindow pokazane.");
             }
             else
             {
                 Shutdown();
             }
+
         }
+
+       
+
 
         private void InitializeSnortAndMonitoring()
         {

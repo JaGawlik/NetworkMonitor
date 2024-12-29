@@ -29,36 +29,31 @@ namespace NetworkMonitor
 
         public ObservableCollection<AlertGroup> AlertGroups { get; set; }
 
-
         public MainWindow(User user, string connectionString)
         {
-            if (user == null)
-                throw new ArgumentNullException(nameof(user), "User cannot be null.");
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException(nameof(connectionString), "Connection string cannot be null or empty.");
-
-
             InitializeComponent();
+
+            this.Closing += (s, e) =>
+            {
+                Console.WriteLine("MainWindow: Okno jest zamykane.");
+                Application.Current.Shutdown();
+            };
+
+            this.Closed += (s, e) =>
+            {
+                Console.WriteLine("MainWindow: Okno zostało zamknięte.");
+                Application.Current.Shutdown();
+            };
 
             CurrentUser = user;
             _connectionString = connectionString;
+            _connectionString = "Host = localhost; Port = 5432; Username = postgres; Password = postgres; Database = ids_system";
 
-           
             AlertGroups = new ObservableCollection<AlertGroup>();
 
-            DataContext = this;
-
-            AlertGroups.Add(new AlertGroup
-            {
-                DestinationIp = "192.168.1.1",
-                Alerts = new List<Alert>
-        {
-            new Alert { Id = 1, Timestamp = DateTime.Now, AlertMessage = "Test Alert 1" },
-            new Alert { Id = 2, Timestamp = DateTime.Now, AlertMessage = "Test Alert 2" }
-        }
-            });
-
             LoadAlerts();
+
+            DataContext = this;
 
 
             _timer = new DispatcherTimer
@@ -71,7 +66,6 @@ namespace NetworkMonitor
 
         private void LoadAlerts()
         {
-            // Pobierz wszystkie alerty z bazy danych
             var allAlerts = AlertRepository.GetAlerts(_connectionString) ?? new List<Alert>();
 
             if (CurrentUser.Role == "user")
@@ -99,7 +93,20 @@ namespace NetworkMonitor
                 AlertGroups.Add(group);
             }
 
-            Console.WriteLine($"Załadowano {AlertGroups.Count} grup alertów.");
+            //Console.WriteLine($"Załadowano {AlertGroups.Count} grup alertów.");
+            AlertGroups.Clear();
+
+            AlertGroups.Add(new AlertGroup
+            {
+                DestinationIp = "192.168.1.1",
+                Alerts = new List<Alert>
+        {
+            new Alert { Id = 1, Timestamp = DateTime.Now, AlertMessage = "Test Alert 1" },
+            new Alert { Id = 2, Timestamp = DateTime.Now, AlertMessage = "Test Alert 2" }
+        }
+            });
+
+            Console.WriteLine("Dane testowe zostały załadowane.");
         }
 
 
