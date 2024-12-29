@@ -17,6 +17,21 @@ namespace NetworkMonitor
 
         protected override void OnStartup(StartupEventArgs e)
         {
+           
+            AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+            {
+                if (args.ExceptionObject is Exception ex)
+                {
+                    MessageBox.Show($"Unhandled exception: {ex.Message}\n{ex.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            };
+
+            DispatcherUnhandledException += (sender, args) =>
+            {
+                MessageBox.Show($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                args.Handled = true;
+            };
+
             base.OnStartup(e);
 
             string host = "localhost";
@@ -53,7 +68,7 @@ namespace NetworkMonitor
                 InitializeSnortAndMonitoring();
 
                 // Otwieranie głównego okna
-                var mainWindow = new MainWindow(user, DBConnectionString);
+                var mainWindow = new MainWindow(user, DBConnectionString);               
                 mainWindow.Show();
             }
             else

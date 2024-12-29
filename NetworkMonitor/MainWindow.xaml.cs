@@ -28,12 +28,15 @@ namespace NetworkMonitor
         private User CurrentUser { get; set; }
 
         public ObservableCollection<AlertGroup> AlertGroups { get; set; }
+
+
         public MainWindow(User user, string connectionString)
         {
             if (user == null)
                 throw new ArgumentNullException(nameof(user), "User cannot be null.");
             if (string.IsNullOrEmpty(connectionString))
                 throw new ArgumentNullException(nameof(connectionString), "Connection string cannot be null or empty.");
+
 
             InitializeComponent();
 
@@ -45,8 +48,18 @@ namespace NetworkMonitor
 
             DataContext = this;
 
+            AlertGroups.Add(new AlertGroup
+            {
+                DestinationIp = "192.168.1.1",
+                Alerts = new List<Alert>
+        {
+            new Alert { Id = 1, Timestamp = DateTime.Now, AlertMessage = "Test Alert 1" },
+            new Alert { Id = 2, Timestamp = DateTime.Now, AlertMessage = "Test Alert 2" }
+        }
+            });
+
             LoadAlerts();
-                   
+
 
             _timer = new DispatcherTimer
             {
@@ -58,29 +71,37 @@ namespace NetworkMonitor
 
         private void LoadAlerts()
         {
-            var allAlerts = AlertRepository.GetAlerts(_connectionString);
+            // Pobierz wszystkie alerty z bazy danych
+            var allAlerts = AlertRepository.GetAlerts(_connectionString) ?? new List<Alert>();
 
             if (CurrentUser.Role == "user")
             {
-                // Filtrowanie dla zwykłych użytkowników
+                // Filtruj alerty dla zwykłego użytkownika
                 allAlerts = allAlerts
                     .Where(a => a.DestinationIp == CurrentUser.AssignedIp)
                     .ToList();
             }
 
+            // Grupowanie alertów według DestinationIp
             var groupedAlerts = allAlerts
                 .GroupBy(a => a.DestinationIp)
                 .Select(group => new AlertGroup
                 {
                     DestinationIp = group.Key,
                     Alerts = group.ToList()
-                });
+                })
+                .ToList();
 
+            // Przypisz grupy alertów do AlertGroups
+            AlertGroups.Clear();
             foreach (var group in groupedAlerts)
             {
                 AlertGroups.Add(group);
             }
+
+            Console.WriteLine($"Załadowano {AlertGroups.Count} grup alertów.");
         }
+
 
         private void CheckForNewAlerts(object sender, EventArgs e)
         {
@@ -90,12 +111,10 @@ namespace NetworkMonitor
 
             if (newAlerts.Any())
             {
-                Console.WriteLine($"Znaleziono {newAlerts.Count} nowych alertów.");
                 _lastMaxId = newAlerts.Max(a => a.Id);
 
                 foreach (var alert in newAlerts)
                 {
-                    Console.WriteLine($"Nowy alert: {alert.AlertMessage} do {alert.DestinationIp}");
                     var existingGroup = AlertGroups.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
 
                     if (existingGroup != null)
@@ -115,10 +134,10 @@ namespace NetworkMonitor
                     }
                 }
 
-                RemoveEmptyGroups();
                 SortGroupsByLatestAlert();
             }
         }
+
 
 
         private void RemoveEmptyGroups()
@@ -142,6 +161,7 @@ namespace NetworkMonitor
                 AlertGroups.Add(group);
             }
         }
+
 
     }
 }
