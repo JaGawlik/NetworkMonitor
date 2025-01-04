@@ -15,8 +15,10 @@
         </Grid.RowDefinitions>
         
         <!-- Menu Bar -->
-        <Rectangle Grid.Row="0" Fill="LightGray"/>
-        
+        <Grid>
+            <Rectangle Grid.Row="0" Fill="LightGray"/>
+            <Button Content="Zaloguj się" Click="LoginButton_Click" HorizontalAlignment="Right" Margin="10" />
+        </Grid>
         <!-- Contenet Panel-->
         <Grid Grid.Row="1">
             <TreeView ItemsSource="{Binding AlertGroups}" Margin="10">
@@ -42,7 +44,11 @@
        
 
         <!-- Footer -->
-        <Rectangle Grid.Row="2" Fill="LightGray"/>
-        
+        <StatusBar Grid.Row="2">
+            <TextBlock HorizontalAlignment="Left" Text="Stan systemu: Monitoring aktywny" />
+            <TextBlock HorizontalAlignment="Right" Text="{Binding CurrentUser?.Username, FallbackValue=Niezalogowany}" />
+        </StatusBar>
+
+
     </Grid>
 </Window>

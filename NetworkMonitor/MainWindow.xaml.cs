@@ -1,6 +1,7 @@
 ﻿using NetworkMonitor.Database;
 using NetworkMonitor.Model;
 using System.Collections.ObjectModel;
+using System.Net;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -25,7 +26,12 @@ namespace NetworkMonitor
         private DispatcherTimer _timer;
         private int _lastMaxId = 0;
 
-        private User CurrentUser { get; set; }
+        private User _currentUser;
+        public User CurrentUser
+        {
+            get => _currentUser ??= new User { Role = "guest" };
+            set => _currentUser = value;
+        }
 
         public ObservableCollection<AlertGroup> AlertGroups { get; set; }
 
@@ -68,12 +74,17 @@ namespace NetworkMonitor
         {
             var allAlerts = AlertRepository.GetAlerts(_connectionString) ?? new List<Alert>();
 
-            if (CurrentUser.Role == "user")
+            switch (CurrentUser.Role)
             {
-                // Filtruj alerty dla zwykłego użytkownika
-                allAlerts = allAlerts
-                    .Where(a => a.DestinationIp == CurrentUser.AssignedIp)
-                    .ToList();
+                case "guest":
+                    string localIp = GetLocalIpAddress();
+                    allAlerts = allAlerts.Where(a => a.DestinationIp == localIp).ToList();
+                    break;
+
+                case "user":
+                    allAlerts = allAlerts.Where(a => a.DestinationIp == CurrentUser.AssignedIp).ToList();
+                    break;
+
             }
 
             // Grupowanie alertów według DestinationIp
@@ -83,16 +94,13 @@ namespace NetworkMonitor
                 {
                     DestinationIp = group.Key,
                     Alerts = group.ToList()
-                })
-                .ToList();
+                });
 
-            // Przypisz grupy alertów do AlertGroups
             AlertGroups.Clear();
             foreach (var group in groupedAlerts)
             {
                 AlertGroups.Add(group);
             }
-
         }
 
 
@@ -101,6 +109,14 @@ namespace NetworkMonitor
             var newAlerts = AlertRepository.GetAlerts(_connectionString)
                                            .Where(a => a.Id > _lastMaxId)
                                            .ToList();
+
+            if (CurrentUser.Role == "guest")
+            {
+                string localIp = GetLocalIpAddress();
+                newAlerts = newAlerts
+                    .Where(a => a.DestinationIp == localIp)
+                    .ToList();
+            }
 
             if (newAlerts.Any())
             {
@@ -155,6 +171,36 @@ namespace NetworkMonitor
             }
         }
 
+        private void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            var loginWindow = new LoginWindow(_connectionString);
+            if (loginWindow.ShowDialog() == true && loginWindow.LoggedUser != null)
+            {
+                CurrentUser = loginWindow.LoggedUser;
+                MessageBox.Show($"Zalogowano jako: {CurrentUser.Username}", "Logowanie", MessageBoxButton.OK, MessageBoxImage.Information);
+                Console.WriteLine($"Zalogowano użytkownika: {CurrentUser.Username} ({CurrentUser.Role})");
+                LoadAlerts();
+            }
+            else
+            {
+                Console.WriteLine("Logowanie nie powiodło się.");
+            }
+        }
+        private static string GetLocalIpAddress()
+        {
+            string hostName = Dns.GetHostName(); // Pobierz nazwę hosta
+            var addresses = Dns.GetHostAddresses(hostName); // Pobierz adresy IP
 
+            // Znajdź pierwszy adres IPv4
+            foreach (var address in addresses)
+            {
+                if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return address.ToString();
+                }
+            }
+
+            throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
+        }
     }
 }

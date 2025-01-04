@@ -61,38 +61,19 @@ namespace NetworkMonitor
                 }
             }
 
-            //Otwarcie okna logowania
-           var loginWindow = new LoginWindow(DBConnectionString);
-            if (loginWindow.ShowDialog() == true)
-            {
-                var user = loginWindow.LoggedUser;
 
-                //Uruchamianie Snorta i monitorowanie alertów po zalogowaniu
-                InitializeSnortAndMonitoring();
+            //Otwieranie głównego okna
+            var mainWindow = new MainWindow(null, DBConnectionString);
 
-
-                //Otwieranie głównego okna
-               var mainWindow = new MainWindow(user, DBConnectionString);
-
-                Application.Current.MainWindow = mainWindow;
-                mainWindow.Show();
-                Console.WriteLine("OnStartup: MainWindow pokazane.");
-            }
-            else
-            {
-                Shutdown();
-            }
-
+            Application.Current.MainWindow = mainWindow;
+            mainWindow.Show();
         }
-
-       
-
 
         private void InitializeSnortAndMonitoring()
         {
             string snortLogPath = @"C:\Snort\log\alert.ids";
             string snortPath = @"C:\Snort\bin\snort.exe";
-            string arguments = "-i 7 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
+            string arguments = "-i 6 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
 
             _snortProcess = Snort.SnortManager.StartSnort(snortPath, arguments);
 
