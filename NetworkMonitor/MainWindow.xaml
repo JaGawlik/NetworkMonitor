@@ -11,7 +11,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="70" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="20" />
+            <RowDefinition Height="40" />
         </Grid.RowDefinitions>
         
         <!-- Menu Bar -->
@@ -45,8 +45,14 @@
 
         <!-- Footer -->
         <StatusBar Grid.Row="2">
-            <TextBlock HorizontalAlignment="Left" Text="Stan systemu: Monitoring aktywny" />
-            <TextBlock HorizontalAlignment="Right" Text="{Binding CurrentUser?.Username, FallbackValue=Niezalogowany}" />
+            <StatusBar VerticalAlignment="Bottom">
+                <StatusBarItem HorizontalAlignment="Left">
+                    <TextBlock Text="Zalogowany jako:" />
+                </StatusBarItem>
+                <StatusBarItem HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding CurrentUser.Username, FallbackValue=Niezalogowany}" />
+                </StatusBarItem>
+            </StatusBar>
         </StatusBar>
 
 

@@ -61,6 +61,7 @@ namespace NetworkMonitor
                 }
             }
 
+            InitializeSnortAndMonitoring();
 
             //Otwieranie głównego okna
             var mainWindow = new MainWindow(null, DBConnectionString);

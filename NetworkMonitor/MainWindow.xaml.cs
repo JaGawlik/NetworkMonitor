@@ -25,12 +25,15 @@ namespace NetworkMonitor
         private string _connectionString;
         private DispatcherTimer _timer;
         private int _lastMaxId = 0;
+        //private string localIp = GetLocalIpAddress();
+        private string localIp = "192.168.0.5";
 
         private User _currentUser;
         public User CurrentUser
         {
             get => _currentUser ??= new User { Role = "guest" };
             set => _currentUser = value;
+           
         }
 
         public ObservableCollection<AlertGroup> AlertGroups { get; set; }
@@ -77,7 +80,6 @@ namespace NetworkMonitor
             switch (CurrentUser.Role)
             {
                 case "guest":
-                    string localIp = GetLocalIpAddress();
                     allAlerts = allAlerts.Where(a => a.DestinationIp == localIp).ToList();
                     break;
 
@@ -112,7 +114,7 @@ namespace NetworkMonitor
 
             if (CurrentUser.Role == "guest")
             {
-                string localIp = GetLocalIpAddress();
+                //string localIp = GetLocalIpAddress();
                 newAlerts = newAlerts
                     .Where(a => a.DestinationIp == localIp)
                     .ToList();
