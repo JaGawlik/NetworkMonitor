@@ -93,20 +93,6 @@ namespace NetworkMonitor
                 AlertGroups.Add(group);
             }
 
-            //Console.WriteLine($"Załadowano {AlertGroups.Count} grup alertów.");
-            AlertGroups.Clear();
-
-            AlertGroups.Add(new AlertGroup
-            {
-                DestinationIp = "192.168.1.1",
-                Alerts = new List<Alert>
-        {
-            new Alert { Id = 1, Timestamp = DateTime.Now, AlertMessage = "Test Alert 1" },
-            new Alert { Id = 2, Timestamp = DateTime.Now, AlertMessage = "Test Alert 2" }
-        }
-            });
-
-            Console.WriteLine("Dane testowe zostały załadowane.");
         }
 
 
