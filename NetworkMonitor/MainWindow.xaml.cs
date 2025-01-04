@@ -1,6 +1,7 @@
 ﻿using NetworkMonitor.Database;
 using NetworkMonitor.Model;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Net;
 using System.Text;
 using System.Windows;
@@ -19,7 +20,7 @@ namespace NetworkMonitor
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public ObservableCollection<Alert> Alerts { get; set; }
         private string _connectionString;
