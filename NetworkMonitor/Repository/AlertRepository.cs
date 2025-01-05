@@ -6,10 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NetworkMonitor.Database
+namespace NetworkMonitor.Repository
 {
     internal class AlertRepository
-    {       
+    {
         public static List<Alert> GetAlerts(string connectionString)
         {
             Console.WriteLine("Pobieranie alertów z bazy danych...");

@@ -1,5 +1,5 @@
-﻿using NetworkMonitor.Database;
-using NetworkMonitor.Model;
+﻿using NetworkMonitor.Model;
+using NetworkMonitor.Repository;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Net;
@@ -32,9 +32,12 @@ namespace NetworkMonitor
         private User _currentUser;
         public User CurrentUser
         {
-            get => _currentUser ??= new User { Role = "guest" };
-            set => _currentUser = value;
-           
+            get => _currentUser ??= new User { Role = "guest", Username = "Niezalogowany" };
+            set
+            {
+                _currentUser = value;
+                OnPropertyChanged(nameof(CurrentUser));
+            }
         }
 
         public ObservableCollection<AlertGroup> AlertGroups { get; set; }
@@ -57,7 +60,6 @@ namespace NetworkMonitor
 
             CurrentUser = user;
             _connectionString = connectionString;
-            _connectionString = "Host = localhost; Port = 5432; Username = postgres; Password = postgres; Database = ids_system";
 
             AlertGroups = new ObservableCollection<AlertGroup>();
 
@@ -191,8 +193,8 @@ namespace NetworkMonitor
         }
         private static string GetLocalIpAddress()
         {
-            string hostName = Dns.GetHostName(); // Pobierz nazwę hosta
-            var addresses = Dns.GetHostAddresses(hostName); // Pobierz adresy IP
+            string hostName = Dns.GetHostName();
+            var addresses = Dns.GetHostAddresses(hostName);
 
             // Znajdź pierwszy adres IPv4
             foreach (var address in addresses)
@@ -204,6 +206,13 @@ namespace NetworkMonitor
             }
 
             throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
