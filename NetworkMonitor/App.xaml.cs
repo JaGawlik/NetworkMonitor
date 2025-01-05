@@ -1,23 +1,23 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq.Expressions;
 using System.Threading.Tasks;
 using System.Windows;
 using NetworkMonitor.Database;
-using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
+using NetworkMonitor.Snort;
 
 namespace NetworkMonitor
 {
     public partial class App : Application
     {
         private Process _snortProcess;
-
         public string DBConnectionString { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
-        {            
+        {
+            base.OnStartup(e);
+
+            // Obsługa wyjątków globalnych
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
                 if (args.ExceptionObject is Exception ex)
@@ -34,59 +34,30 @@ namespace NetworkMonitor
                 args.Handled = true;
             };
 
-            base.OnStartup(e);
+            // Inicjalizacja bazy danych i sprawdzanie użytkowników
+            var databaseService = new DatabaseInitializerService();
+            DBConnectionString = databaseService.InitializeDatabase("localhost", 5432, "postgres", "postgres", "postgres", "ids_system");
 
-
-            string host = "localhost";
-            int port = 5432;
-            string dbUser = "postgres";
-            string password = "postgres";
-            string initialDatabase = "postgres";
-            string targetDb = "ids_system";
-
-            DBConnectionString = $"Host={host};Port={port};Username={dbUser};Password={password};Database={targetDb}";
-
-           // Tworzenie bazy danych
-            string initialConnectionString = $"Host={host};Port={port};Username={dbUser};Password={password};Database={initialDatabase}";
-            DatabaseInit.EnsureDatabaseExists(initialConnectionString, targetDb);
-
-            //Sprawdzanie użytkowników w bazie
-            if (!UserRepository.HasUsers(DBConnectionString))
+            if (!databaseService.EnsureUsersExist(DBConnectionString))
             {
-                var addUserWindow = new AddUserWindow(DBConnectionString);
-                if (addUserWindow.ShowDialog() != true)
-                {
-                    Shutdown(); 
-                    return;
-                }
-            }
-
-            InitializeSnortAndMonitoring();
-
-            //Otwieranie głównego okna
-            var mainWindow = new MainWindow(null, DBConnectionString);
-
-            Application.Current.MainWindow = mainWindow;
-            mainWindow.Show();
-        }
-
-        private void InitializeSnortAndMonitoring()
-        {
-            string snortLogPath = @"C:\Snort\log\alert.ids";
-            string snortPath = @"C:\Snort\bin\snort.exe";
-            string arguments = "-i 6 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
-
-            _snortProcess = Snort.SnortManager.StartSnort(snortPath, arguments);
-
-            if (_snortProcess == null)
-            {
-                MessageBox.Show("Nie udało się uruchomić Snorta. Aplikacja zostanie zamknięta.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
                 return;
             }
 
-            var monitor = new Snort.SnortAlertMonitor(snortLogPath, DBConnectionString);
-            Task.Run(() => monitor.StartMonitoringAsync());
+            // Uruchamianie Snorta
+            var snortService = new SnortManagerService();
+            _snortProcess = snortService.StartSnort(DBConnectionString);
+
+            if (_snortProcess == null)
+            {
+                Shutdown();
+                return;
+            }
+
+            // Otwieranie głównego okna
+            var mainWindow = new MainWindow(null, DBConnectionString);
+            Application.Current.MainWindow = mainWindow;
+            mainWindow.Show();
         }
 
         protected override void OnExit(ExitEventArgs e)
