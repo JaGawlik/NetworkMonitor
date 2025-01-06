@@ -39,6 +39,8 @@ namespace NetworkMonitor.Snort
             {
                 // Odczyt od końca pliku
                 fs.Seek(0, SeekOrigin.End);
+                Console.WriteLine($"Pozycja wskaźnika w pliku: {fs.Position} (rozmiar pliku: {fs.Length})");
+
 
                 while (true)
                 {
