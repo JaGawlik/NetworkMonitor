@@ -32,7 +32,7 @@ namespace NetworkMonitor.Repository
                 using (var command = new NpgsqlCommand(query, connection))
                 {
                     command.Parameters.AddWithValue("username", user.Username);
-                    command.Parameters.AddWithValue("password", user.Password); // Upewnij się, że hasła są haszowane w produkcji
+                    command.Parameters.AddWithValue("password", user.Password);
                     command.Parameters.AddWithValue("role", user.Role);
                     command.Parameters.AddWithValue("assigned_ip", (object)user.AssignedIp ?? DBNull.Value);
 
@@ -68,7 +68,7 @@ namespace NetworkMonitor.Repository
                     }
                 }
             }
-            return null; // Jeśli użytkownik nie istnieje, zwraca null
+            return null; 
         }
 
     }

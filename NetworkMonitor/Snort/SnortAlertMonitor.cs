@@ -1,24 +1,25 @@
-﻿using Npgsql;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using NetworkMonitor.Model;
 
 namespace NetworkMonitor.Snort
 {
     internal class SnortAlertMonitor
     {
         private string _snortLogPath;
-        private string _connString;
+        private string _apiUrl; // URL do API
         private Regex _regex;
 
-        public SnortAlertMonitor(string logPath, string connString)
+        public SnortAlertMonitor(string logPath, string apiUrl)
         {
             _snortLogPath = logPath;
-            _connString = connString;
+            _apiUrl = apiUrl;
             _regex = new Regex(
                 @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[\d+:\d+:\d+\]\s(?<message>.*?)\s\[\*\*\]\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[\d\.]+)\s->\s(?<dstip>[\d\.]+)",
                 RegexOptions.Compiled
@@ -30,7 +31,7 @@ namespace NetworkMonitor.Snort
             using (FileStream fs = new FileStream(_snortLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (StreamReader sr = new StreamReader(fs))
             {
-                //odczyt ostatniego alertu
+                // Odczyt od końca pliku
                 fs.Seek(0, SeekOrigin.End);
 
                 while (true)
@@ -42,7 +43,7 @@ namespace NetworkMonitor.Snort
                     }
                     else
                     {
-                        //sprawdzanie po chwili
+                        // Sprawdzanie po chwili
                         await Task.Delay(1000);
                     }
                 }
@@ -71,42 +72,45 @@ namespace NetworkMonitor.Snort
                 string month = mdParts[0];
                 string day = mdParts[1];
 
-                DateTime timestamp;
                 if (DateTime.TryParseExact($"{currentYear}/{month}/{day} {hms}",
                     "yyyy/MM/dd HH:mm:ss.ffffff",
                     System.Globalization.CultureInfo.InvariantCulture,
                     System.Globalization.DateTimeStyles.None,
-                    out timestamp))
+                    out DateTime timestamp))
                 {
-                    // Zapis do bazy
-                    await InsertAlertAsync(timestamp, alertMessage, srcIp, dstIp, protocol);
+                    // Wyślij alert do API
+                    await SendAlertToApiAsync(new Alert
+                    {
+                        Timestamp = timestamp,
+                        AlertMessage = alertMessage,
+                        SourceIp = srcIp,
+                        DestinationIp = dstIp,
+                        Protocol = protocol,
+                        SnortInstance = "Snort_PC_01"
+                    });
                 }
             }
         }
 
-        private async Task InsertAlertAsync(DateTime timestamp, string message, string srcIp, string dstIp, string protocol)
+        private async Task SendAlertToApiAsync(Alert alert)
         {
-            using (var conn = new NpgsqlConnection(_connString))
+            using var httpClient = new HttpClient();
+            try
             {
-                await conn.OpenAsync();
-                string insertQuery = @"
-                INSERT INTO alerts (timestamp, alert_message, source_ip, destination_ip, protocol, snort_instance)
-                VALUES (@time, @msg, @src, @dst, @proto, @inst)";
-
-                using (var cmd = new NpgsqlCommand(insertQuery, conn))
+                var response = await httpClient.PostAsJsonAsync($"{_apiUrl}/api/alerts", alert);
+                if (response.IsSuccessStatusCode)
                 {
-                    cmd.Parameters.AddWithValue("time", timestamp);
-                    cmd.Parameters.AddWithValue("msg", message);
-                    cmd.Parameters.AddWithValue("src", srcIp);
-                    cmd.Parameters.AddWithValue("dst", dstIp);
-                    cmd.Parameters.AddWithValue("proto", protocol);
-                    cmd.Parameters.AddWithValue("inst", "Snort_PC_01");
-
-                    await cmd.ExecuteNonQueryAsync();
+                    Console.WriteLine($"Alert wysłany do API: {alert.AlertMessage}");
+                }
+                else
+                {
+                    Console.WriteLine($"Błąd podczas wysyłania alertu do API: {response.StatusCode}");
                 }
             }
-            Console.WriteLine($"Zapisano alert: {message} z {srcIp} do {dstIp} ({protocol})");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas komunikacji z API: {ex.Message}");
+            }
         }
-
     }
 }

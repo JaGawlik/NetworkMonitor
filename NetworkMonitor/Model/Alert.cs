@@ -15,5 +15,6 @@ namespace NetworkMonitor.Model
         public string DestinationIp { get; set; }
         public string Protocol { get; set; }
         public string Status { get; set; }
+        public string SnortInstance { get; set; }
     }
 }

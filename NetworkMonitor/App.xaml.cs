@@ -17,7 +17,6 @@ namespace NetworkMonitor
         {
             base.OnStartup(e);
 
-            // Obsługa wyjątków globalnych
             AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
             {
                 if (args.ExceptionObject is Exception ex)

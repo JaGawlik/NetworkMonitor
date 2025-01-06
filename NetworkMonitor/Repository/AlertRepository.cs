@@ -17,7 +17,7 @@ namespace NetworkMonitor.Repository
             connection.Open();
 
             string query = @"
-                SELECT id, timestamp, alert_message, source_ip, destination_ip, protocol, status
+                SELECT id, timestamp, alert_message, source_ip, destination_ip, protocol, status, snort_instance
                 FROM alerts
                 ORDER BY timestamp DESC";
 
@@ -35,7 +35,8 @@ namespace NetworkMonitor.Repository
                     SourceIp = reader.GetString(3),
                     DestinationIp = reader.GetString(4),
                     Protocol = reader.GetString(5),
-                    Status = reader.GetString(6)
+                    Status = reader.GetString(6),
+                    SnortInstance = reader.IsDBNull(7) ? null : reader.GetString(7)
                 });
             }
 

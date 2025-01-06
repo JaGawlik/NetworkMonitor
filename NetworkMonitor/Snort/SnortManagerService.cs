@@ -23,7 +23,7 @@ namespace NetworkMonitor.Snort
                 return null;
             }
 
-            var monitor = new SnortAlertMonitor(snortLogPath, connectionString);
+            var monitor = new SnortAlertMonitor(snortLogPath, "http://localhost:5136");
             Task.Run(() => monitor.StartMonitoringAsync());
 
             return snortProcess;
