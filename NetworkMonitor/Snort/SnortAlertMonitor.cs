@@ -28,6 +28,12 @@ namespace NetworkMonitor.Snort
 
         public async Task StartMonitoringAsync()
         {
+            if (!File.Exists(_snortLogPath))
+            {
+                Console.WriteLine($"Plik logów Snorta nie istnieje: {_snortLogPath}");
+                return;
+            }
+
             using (FileStream fs = new FileStream(_snortLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (StreamReader sr = new StreamReader(fs))
             {
@@ -39,6 +45,7 @@ namespace NetworkMonitor.Snort
                     string line = await sr.ReadLineAsync();
                     if (line != null)
                     {
+                        Console.WriteLine($"Przeczytano linię: {line}");
                         await ProcessLineAsync(line);
                     }
                     else
@@ -86,6 +93,7 @@ namespace NetworkMonitor.Snort
                         SourceIp = srcIp,
                         DestinationIp = dstIp,
                         Protocol = protocol,
+                        Status = "new",
                         SnortInstance = "Snort_PC_01"
                     });
                 }
