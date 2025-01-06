@@ -17,7 +17,10 @@
         <!-- Menu Bar -->
         <Grid>
             <Rectangle Grid.Row="0" Fill="LightGray"/>
-            <Button Content="Zaloguj się" Click="LoginButton_Click" HorizontalAlignment="Right" Margin="10" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
+                <Button Content="Zaloguj się" Click="LoginButton_Click" Margin="0,0,5,0"/>
+                <Button Content="Wyloguj się" Click="LogoutButton_Click"/>
+            </StackPanel>
         </Grid>
         <!-- Contenet Panel-->
         <Grid Grid.Row="1">

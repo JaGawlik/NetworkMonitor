@@ -42,5 +42,14 @@ namespace NetworkMonitor
                 Console.WriteLine("Logowanie nie powiodło się.");
             }
         }
+
+        private void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as MainWindowViewModel;
+            viewModel.CurrentUser = new User { Role = "guest", Username = "Niezalogowany" };
+            MessageBox.Show("Wylogowano.", "Wylogowanie", MessageBoxButton.OK, MessageBoxImage.Information);
+            Console.WriteLine("Wylogowano. Rola: guest");
+            viewModel.LoadAlerts();
+        }
     }
 }
