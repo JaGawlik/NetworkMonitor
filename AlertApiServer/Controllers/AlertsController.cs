@@ -12,6 +12,7 @@ namespace AlertApiServer.Controllers
         [HttpPost]
         public IActionResult ReceiveAlert([FromBody] Alert alert)
         {
+            Console.WriteLine($"Otrzymano alert: {alert.AlertMessage} od {alert.SourceIp} do {alert.DestinationIp}");
             try
             {
                 string connectionString = "Host=localhost;Username=postgres;Password=postgres;Database=ids_system";

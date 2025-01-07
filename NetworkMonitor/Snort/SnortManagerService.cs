@@ -13,7 +13,7 @@ namespace NetworkMonitor.Snort
         {
             string snortLogPath = @"C:\Snort\log\alert.ids";
             string snortPath = @"C:\Snort\bin\snort.exe";
-            string arguments = "-i 7 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
+            string arguments = "-i 6 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
             string apiUrl = "http://localhost:5136";
 
             var snortProcess = SnortManager.StartSnort(snortPath, arguments);
