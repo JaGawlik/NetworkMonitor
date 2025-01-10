@@ -43,13 +43,6 @@ namespace NetworkMonitor
                 Console.WriteLine("Logowanie nie powiodło się.");
             }
         }
-
-        private void OpenConfigurationButton_Click(object sender, RoutedEventArgs e)
-        {
-            var configurationWindow = new ConfigurationWindow(); // Stwórz nowe okno konfiguracji
-            configurationWindow.ShowDialog(); // Wyświetl okno modalne
-        }
-
         private void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = DataContext as MainWindowViewModel;

@@ -22,14 +22,14 @@ namespace NetworkMonitor
                 if (args.ExceptionObject is Exception ex)
                 {
                     Console.WriteLine($"Unhandled exception: {ex.Message}\n{ex.StackTrace}");
-                    MessageBox.Show($"Unhandled exception: {ex.Message}\n{ex.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show($"Unhandled exception: {ex.Message}\n{ex.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
 
             DispatcherUnhandledException += (sender, args) =>
             {
                 Console.WriteLine($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}");
-                MessageBox.Show($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 args.Handled = true;
             };
 
@@ -55,7 +55,7 @@ namespace NetworkMonitor
 
             // Otwieranie głównego okna
             var mainWindow = new MainWindow(null, DBConnectionString);
-            Application.Current.MainWindow = mainWindow;
+            System.Windows.Application.Current.MainWindow = mainWindow;
             mainWindow.Show();
         }
 

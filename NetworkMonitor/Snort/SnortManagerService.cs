@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using NetworkMonitor.Snort;
+using NetworkMonitor.Configuration;
 
 namespace NetworkMonitor.Snort
 {
@@ -11,9 +12,10 @@ namespace NetworkMonitor.Snort
     {
         public Process StartSnort(string connectionString)
         {
-            string snortLogPath = @"C:\Snort\log\alert.ids";
-            string snortPath = @"C:\Snort\bin\snort.exe";
-            string arguments = "-i 6 -c C:\\Snort\\etc\\snort.conf -l C:\\Snort\\log -A fast -N";
+            string snortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
+            string snortLogPath = Path.Combine(snortInstallationPath, "log", "alert.ids");
+            string snortPath = Path.Combine(snortInstallationPath, "bin", "snort.exe");
+            string arguments = $"-i 6 -c {Path.Combine(snortInstallationPath, "etc", "snort.conf")} -l {Path.Combine(snortInstallationPath, "log")} -A fast -N";
             string apiUrl = "http://localhost:5136";
 
             var snortProcess = SnortManager.StartSnort(snortPath, arguments);

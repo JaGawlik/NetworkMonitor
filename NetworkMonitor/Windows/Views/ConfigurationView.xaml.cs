@@ -12,6 +12,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Microsoft.Win32;
+using NetworkMonitor.Configuration;
 
 namespace NetworkMonitor.Windows.Views
 {
@@ -23,6 +25,27 @@ namespace NetworkMonitor.Windows.Views
         public ConfigurationView()
         {
             InitializeComponent();
+            DataContext = new ConfigurationViewModel();
+        }
+
+        private void BrowseLogFile_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Log Files (*.log)|*.log|All Files (*.*)|*.*",
+                Title = "Wybierz plik logów Snort"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                var viewModel = DataContext as ConfigurationViewModel;
+                if (viewModel != null)
+                {
+                    viewModel.LogFilePath = openFileDialog.FileName;
+                }
+            }
         }
     }
+
+
 }

@@ -185,7 +185,10 @@ namespace NetworkMonitor
             }
             else if (SelectedTabIndex == 1) 
             {
-                CurrentView = new ConfigurationView(); 
+                CurrentView = new ConfigurationView
+                {
+                    DataContext = this
+                };
             }
         }
 
