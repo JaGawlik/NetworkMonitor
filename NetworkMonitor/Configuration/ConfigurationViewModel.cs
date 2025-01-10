@@ -45,10 +45,6 @@ namespace NetworkMonitor.Configuration
         public ICommand BrowseSnortFolderCommand { get; }
         public ConfigurationViewModel()
         {
-            SaveCommand = new RelayCommand(SaveSettings);
-            BrowseLogFileCommand = new RelayCommand(BrowseLogFile);
-            BrowseSnortFolderCommand = new RelayCommand(BrowseSnortFolder);
-
             LogFilePath = ConfigurationManager.GetSetting("LogFilePath");
             ApiAddress = ConfigurationManager.GetSetting("ApiAddress");
             SnortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
@@ -60,34 +56,6 @@ namespace NetworkMonitor.Configuration
             ConfigurationManager.SetSetting("SnortInstallationPath", SnortInstallationPath);
             ConfigurationManager.SaveSettings();
         }
-
-        private void BrowseLogFile()
-        {
-            var openFileDialog = new OpenFileDialog
-            {
-                Filter = "Pliki logów (*.log)|*.log|Wszystkie pliki (*.*)|*.*",
-                Title = "Wybierz plik logów Snort"
-            };
-
-            if (openFileDialog.ShowDialog() == true)
-            {
-                LogFilePath = openFileDialog.FileName;
-            }
-        }
-
-        private void BrowseSnortFolder()
-        {
-            var folderDialog = new System.Windows.Forms.FolderBrowserDialog
-            {
-                Description = "Wybierz folder instalacyjny Snort"
-            };
-
-            if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                SnortInstallationPath = folderDialog.SelectedPath;
-            }
-        }
-
 
         public event PropertyChangedEventHandler PropertyChanged;
 

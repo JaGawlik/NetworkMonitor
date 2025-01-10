@@ -26,22 +26,53 @@ namespace NetworkMonitor.Windows.Views
         {
             InitializeComponent();
             DataContext = new ConfigurationViewModel();
+
+            if (DataContext == null)
+            {
+                Console.WriteLine("DataContext nie jest ustawione w ConfigurationView");
+            }
+            
         }
 
         private void BrowseLogFile_Click(object sender, RoutedEventArgs e)
         {
-            var openFileDialog = new OpenFileDialog
+            var viewModel = DataContext as ConfigurationViewModel;
+            if (viewModel == null)
             {
-                Filter = "Log Files (*.log)|*.log|All Files (*.*)|*.*",
-                Title = "Wybierz plik logów Snort"
+                Console.WriteLine("DataContext is null or not of type ConfigurationViewModel");
+                return;
+            }
+
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "IDS Files (*.ids)|*.ids|Log Files (*.log)|*.log|All Files (*.*)|*.*",
+                Title = "Wybierz plik logów Snort .ids"
             };
 
             if (openFileDialog.ShowDialog() == true)
             {
-                var viewModel = DataContext as ConfigurationViewModel;
+                //var viewModel = DataContext as ConfigurationViewModel;
                 if (viewModel != null)
                 {
                     viewModel.LogFilePath = openFileDialog.FileName;
+                }
+            }
+        }
+
+        private void BrowseSnortFolder_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog
+            {
+                Description = "Wybierz folder instalacyjny Snort",
+                UseDescriptionForTitle = true
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                var viewModel = DataContext as ConfigurationViewModel;
+                if (viewModel != null)
+                {
+                    viewModel.SnortInstallationPath = dialog.SelectedPath; // Aktualizuje model widoku
                 }
             }
         }

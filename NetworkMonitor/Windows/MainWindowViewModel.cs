@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Windows;
 using System.Windows.Threading;
+using NetworkMonitor.Configuration;
 using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
 using NetworkMonitor.Windows.Views;
@@ -185,9 +186,10 @@ namespace NetworkMonitor
             }
             else if (SelectedTabIndex == 1) 
             {
+                var configViewModel = new ConfigurationViewModel();
                 CurrentView = new ConfigurationView
                 {
-                    DataContext = this
+                    DataContext = configViewModel
                 };
             }
         }
