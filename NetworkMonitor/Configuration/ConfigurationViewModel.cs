@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System.ComponentModel;
 using System.Windows.Input;
+using System;
 
 namespace NetworkMonitor.Configuration
 {
@@ -46,6 +47,7 @@ namespace NetworkMonitor.Configuration
         {
             SaveCommand = new RelayCommand(SaveSettings);
             BrowseLogFileCommand = new RelayCommand(BrowseLogFile);
+            BrowseSnortFolderCommand = new RelayCommand(BrowseSnortFolder);
 
             LogFilePath = ConfigurationManager.GetSetting("LogFilePath");
             ApiAddress = ConfigurationManager.GetSetting("ApiAddress");
@@ -72,7 +74,20 @@ namespace NetworkMonitor.Configuration
                 LogFilePath = openFileDialog.FileName;
             }
         }
-      
+
+        private void BrowseSnortFolder()
+        {
+            var folderDialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Wybierz folder instalacyjny Snort"
+            };
+
+            if (folderDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                SnortInstallationPath = folderDialog.SelectedPath;
+            }
+        }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
 
