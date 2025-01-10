@@ -15,36 +15,27 @@
         </Grid.RowDefinitions>
         
         <!-- Menu Bar -->
-        <Grid>
-            <Rectangle Grid.Row="0" Fill="LightGray"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
-                <Button Content="Zaloguj się" Click="LoginButton_Click" Margin="0,0,5,0"/>
-                <Button Content="Wyloguj się" Click="LogoutButton_Click"/>
-            </StackPanel>
-        </Grid>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="10">
+            <Button Content="Zaloguj się" Click="LoginButton_Click" Margin="0,0,5,0"/>
+            <Button Content="Wyloguj się" Click="LogoutButton_Click"/>
+        </StackPanel>
+        
+        
         <!-- Contenet Panel-->
-        <Grid Grid.Row="1">
-            <TreeView ItemsSource="{Binding AlertGroups}" Margin="10">
-
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate DataType="{x:Type model:AlertGroup}" ItemsSource="{Binding Alerts}">
-
-                        <TextBlock Text="{Binding DestinationIp}" FontWeight="Bold" />
-
-                        <HierarchicalDataTemplate.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Timestamp, StringFormat=yyyy-MM-dd HH:mm:ss}" Margin="0,0,10,0" />
-                                    <TextBlock Text="{Binding AlertMessage}" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </HierarchicalDataTemplate.ItemTemplate>
-                    </HierarchicalDataTemplate>
-
-                </TreeView.ItemTemplate>
-            </TreeView>
-        </Grid>
-       
+        <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}">
+            <!-- Tab for Alerts -->
+            <TabItem Header="Alerty">
+                <Grid>
+                    <ContentPresenter Grid.Row="1" Content="{Binding CurrentView}" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Konfiguracja">
+                <Grid>
+                    <Button Content="Otwórz konfigurację" Click="OpenConfigurationButton_Click" HorizontalAlignment="Center" VerticalAlignment="Center" Width="200" Height="50" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+      
 
         <!-- Footer -->
         <StatusBar Grid.Row="2">

@@ -3,9 +3,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Net;
+using System.Windows;
 using System.Windows.Threading;
 using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
+using NetworkMonitor.Windows.Views;
 
 namespace NetworkMonitor
 {
@@ -25,6 +27,30 @@ namespace NetworkMonitor
             }
         }
 
+        private object _currentView;
+        public object CurrentView
+        {
+            get => _currentView;
+            set
+            {
+                _currentView = value;
+                OnPropertyChanged(nameof(CurrentView));
+            }
+        }
+
+        public int SelectedTabIndex
+        {
+            get => _selectedTabIndex;
+            set
+            {
+                _selectedTabIndex = value;
+                OnPropertyChanged(nameof(SelectedTabIndex));
+                UpdateCurrentView();
+            }
+        }
+
+        private int _selectedTabIndex;
+
         public ObservableCollection<AlertGroup> AlertGroups { get; set; } = new ObservableCollection<AlertGroup>();
 
         public string ConnectionString { get; }
@@ -35,6 +61,8 @@ namespace NetworkMonitor
         {
             CurrentUser = user ?? new User { Role = "guest", Username = "Niezalogowany" };
             ConnectionString = connectionString;
+
+            SelectedTabIndex = 0;
 
             LoadAlerts();
 
@@ -145,6 +173,20 @@ namespace NetworkMonitor
             }
 
             throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
+        }
+        private void UpdateCurrentView()
+        {
+            if (SelectedTabIndex == 0) 
+            {
+                CurrentView = new AlertsView
+                {
+                    DataContext = this
+                };
+            }
+            else if (SelectedTabIndex == 1) 
+            {
+                CurrentView = new ConfigurationView(); 
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

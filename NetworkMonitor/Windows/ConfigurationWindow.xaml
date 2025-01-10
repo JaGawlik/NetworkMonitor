@@ -1,0 +1,16 @@
+﻿<Window x:Class="NetworkMonitor.Windows.ConfigurationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Konfiguracja" Height="300" Width="400">
+    <Grid>
+        <StackPanel Margin="20">
+            <TextBlock Text="Adres API" FontWeight="Bold" Margin="0,0,0,10"/>
+            <TextBox x:Name="ApiUrlTextBox" Text="http://localhost:5136" Margin="0,0,0,20" />
+
+            <TextBlock Text="Ścieżka logów Snorta" FontWeight="Bold" Margin="0,0,0,10"/>
+            <TextBox x:Name="LogPathTextBox" Text="C:\Snort\log\alert.ids" Margin="0,0,0,20" />
+
+            <Button Content="Zapisz" Click="SaveButton_Click" HorizontalAlignment="Right" Width="100" />
+        </StackPanel>
+    </Grid>
+</Window>
