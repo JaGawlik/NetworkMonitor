@@ -20,7 +20,7 @@
             </Grid>
 
             <TextBlock Text="Adres API:" FontWeight="Bold" Margin="5,0,5,0"/>
-            <TextBox Text="{Binding ApiAddress}" Height="25" Margin="0,5,0,15"  />
+            <TextBox Text="{Binding ApiAddress}" Height="20" Margin="0,5,0,15"  />
 
             <TextBlock Text="Folder instalacyjny Snort:" Margin="5,0,5,0" FontWeight="Bold"/>
             <Grid Margin="0,5,0,15">
@@ -33,7 +33,7 @@
             </Grid>
 
             <Button Content="Zapisz ustawienia" Width="150" HorizontalAlignment="Left" 
-                Command="{Binding SaveCommand}" />
+                Click="SaveSettings_Clikc" />
         </StackPanel>
     </Grid>
 </UserControl>

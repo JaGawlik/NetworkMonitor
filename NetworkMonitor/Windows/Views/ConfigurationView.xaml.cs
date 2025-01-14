@@ -76,6 +76,16 @@ namespace NetworkMonitor.Windows.Views
                 }
             }
         }
+
+        private void SaveSettings_Clikc(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as ConfigurationViewModel;
+            if (viewModel != null)
+            {
+                viewModel.SaveSettings();
+                MessageBox.Show("Zapisano ustawienia", "Zapisano", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
     }
 
 
