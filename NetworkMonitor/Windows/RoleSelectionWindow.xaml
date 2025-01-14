@@ -1,0 +1,16 @@
+﻿<Window x:Class="NetworkMonitor.Windows.RoleSelectionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NetworkMonitor.Windows"
+        mc:Ignorable="d"
+        Title="RoleSelectionWindow" Height="200" Width="300">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" >
+            <TextBlock Text="Wybierz typ komputera:" FontWeight="Bold" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+            <Button Content="Administrator" Click="AdminButton_Click" Width="200" Height="40" Margin="5,5,5,5"/>
+            <Button Content="Użytkownik" Click="UserButton_Click" Width="200" Height="40" Margin="5,5,5,5"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -5,6 +5,7 @@ using System.Windows;
 using NetworkMonitor.Database;
 using NetworkMonitor.Repository;
 using NetworkMonitor.Snort;
+using NetworkMonitor.Windows;
 
 namespace NetworkMonitor
 {
@@ -32,6 +33,17 @@ namespace NetworkMonitor
                 System.Windows.MessageBox.Show($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 args.Handled = true;
             };
+
+            //var roleSectionWindow = new RoleSelectionWindow();
+            //if (roleSectionWindow.ShowDialog() == true)
+            //{
+            //    string selectedRole = roleSectionWindow.SelectedRole;
+
+            //    if (selectedRole == "Administrator")
+            //    {
+
+            //    }
+            //}
 
             // Inicjalizacja bazy danych i sprawdzanie użytkowników
             var databaseService = new DatabaseInitializerService();
