@@ -19,6 +19,34 @@
                 <Button Grid.Column="1" Click="BrowseLogFile_Click" Content="..." Width="30" Margin="5,0,0,0" />
             </Grid>
 
+            <TextBlock Text="Connection String:" FontWeight="Bold" Margin="5,0,5,0"/>
+
+            <StackPanel Margin="20">
+                <TextBlock Text="Host:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+
+                <TextBlock Text="Port:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+
+                <TextBlock Text="Database:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBox Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+
+                <TextBlock Text="Username:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+
+                <TextBlock Text="Password:" FontWeight="Bold" Margin="5,0,5,0" />
+                <PasswordBox Margin="0,0,0,15" PasswordChanged="PasswordBox_PasswordChanged" />
+
+                <TextBlock Text="Log File Path:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBox Text="{Binding LogFilePath}" Margin="0,0,0,15" />
+
+                <TextBlock Text="API Address:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBox Text="{Binding ApiAddress}" Margin="0,0,0,15" />
+
+                <TextBlock Text="Snort Installation Path:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBox Text="{Binding SnortInstallationPath}" Margin="0,0,0,15" />
+            </StackPanel>
+
             <TextBlock Text="Adres API:" FontWeight="Bold" Margin="5,0,5,0"/>
             <TextBox Text="{Binding ApiAddress}" Height="20" Margin="0,5,0,15"  />
 

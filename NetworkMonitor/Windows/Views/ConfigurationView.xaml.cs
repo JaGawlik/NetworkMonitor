@@ -85,7 +85,13 @@ namespace NetworkMonitor.Windows.Views
                 MessageBox.Show("Zapisano ustawienia", "Zapisano", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
+        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ConfigurationViewModel viewModel)
+            {
+                var passwordBox = sender as PasswordBox;
+                viewModel.Password = passwordBox.Password;
+            }
+        }
     }
-
-
 }
