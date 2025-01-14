@@ -8,60 +8,53 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <StackPanel Margin="20">
-            <TextBlock Text="Ścieżka do pliku logów Snort:" FontWeight="Bold" Margin="5,0,5,0" />
-            <Grid Margin="0,5,0,15">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding LogFilePath, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="1" Click="BrowseLogFile_Click" Content="..." Width="30" Margin="5,0,0,0" />
-            </Grid>
-
-            <TextBlock Text="Connection String:" FontWeight="Bold" Margin="5,0,5,0"/>
-
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
             <StackPanel Margin="20">
-                <TextBlock Text="Host:" FontWeight="Bold" Margin="5,0,5,0" />
-                <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+                <TextBlock Text="Ścieżka do pliku logów Snort:" FontWeight="Bold" Margin="5,0,5,0" />
+                <Grid Margin="0,5,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding LogFilePath, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="1" Click="BrowseLogFile_Click" Content="..." Width="30" Margin="5,0,0,0" />
+                </Grid>
 
-                <TextBlock Text="Port:" FontWeight="Bold" Margin="5,0,5,0" />
-                <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+                <TextBlock Text="Adres API:" FontWeight="Bold" Margin="5,0,5,0"/>
+                <TextBox Text="{Binding ApiAddress}" Height="20" Margin="0,5,0,15"  />
 
-                <TextBlock Text="Database:" FontWeight="Bold" Margin="5,0,5,0" />
-                <TextBox Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+                <TextBlock Text="Folder instalacyjny Snort:" Margin="5,0,5,0" FontWeight="Bold"/>
+                <Grid Margin="0,5,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Text="{Binding SnortInstallationPath, UpdateSourceTrigger=PropertyChanged}" />
+                    <Button Grid.Column="1" Click="BrowseSnortFolder_Click" Content="..." Width="30" Margin="5,0,0,0" />
+                </Grid>
 
-                <TextBlock Text="Username:" FontWeight="Bold" Margin="5,0,5,0" />
-                <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
+                <Expander Header="Ustawienia Bazy Danych" FontWeight="Bold" IsExpanded="False" Margin="0,10,0,15">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Host:" FontWeight="Bold" Margin="5,0,5,0" />
+                        <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
 
-                <TextBlock Text="Password:" FontWeight="Bold" Margin="5,0,5,0" />
-                <PasswordBox Margin="0,0,0,15" PasswordChanged="PasswordBox_PasswordChanged" />
+                        <TextBlock Text="Port:" FontWeight="Bold" Margin="5,0,5,0" />
+                        <TextBox Text="{Binding Port, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
 
-                <TextBlock Text="Log File Path:" FontWeight="Bold" Margin="5,0,5,0" />
-                <TextBox Text="{Binding LogFilePath}" Margin="0,0,0,15" />
+                        <TextBlock Text="Database:" FontWeight="Bold" Margin="5,0,5,0" />
+                        <TextBox Text="{Binding Database, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
 
-                <TextBlock Text="API Address:" FontWeight="Bold" Margin="5,0,5,0" />
-                <TextBox Text="{Binding ApiAddress}" Margin="0,0,0,15" />
+                        <TextBlock Text="Username:" FontWeight="Bold" Margin="5,0,5,0" />
+                        <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
 
-                <TextBlock Text="Snort Installation Path:" FontWeight="Bold" Margin="5,0,5,0" />
-                <TextBox Text="{Binding SnortInstallationPath}" Margin="0,0,0,15" />
-            </StackPanel>
+                        <TextBlock Text="Password:" FontWeight="Bold" Margin="5,0,5,0" />
+                        <PasswordBox Margin="0,0,0,15" PasswordChanged="PasswordBox_PasswordChanged" />
+                    </StackPanel>
+                </Expander>
 
-            <TextBlock Text="Adres API:" FontWeight="Bold" Margin="5,0,5,0"/>
-            <TextBox Text="{Binding ApiAddress}" Height="20" Margin="0,5,0,15"  />
-
-            <TextBlock Text="Folder instalacyjny Snort:" Margin="5,0,5,0" FontWeight="Bold"/>
-            <Grid Margin="0,5,0,15">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding SnortInstallationPath, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="1" Click="BrowseSnortFolder_Click" Content="..." Width="30" Margin="5,0,0,0" />
-            </Grid>
-
-            <Button Content="Zapisz ustawienia" Width="150" HorizontalAlignment="Left" 
+                <Button Content="Zapisz ustawienia" Width="150" HorizontalAlignment="Left" 
                 Click="SaveSettings_Clikc" />
-        </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

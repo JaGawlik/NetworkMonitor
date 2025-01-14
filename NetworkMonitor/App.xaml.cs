@@ -47,8 +47,8 @@ namespace NetworkMonitor
             //}
 
             // Inicjalizacja bazy danych i sprawdzanie użytkowników
-            var databaseService = new DatabaseInitializerService();
             //DBConnectionString = databaseService.InitializeDatabase("localhost", 5432, "postgres", "postgres", "postgres", "ids_system");
+            //DatabaseInitializerService.InitializeDatabase();
             DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
             if (string.IsNullOrEmpty(DBConnectionString))
             {
@@ -57,10 +57,9 @@ namespace NetworkMonitor
                 DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
             }
 
-            // Upewnij się, że baza danych istnieje
-            //databaseService.EnsureDatabaseExists(DBConnectionString);
-
-
+            //Upewnienie bazy danych
+            var databaseService = new DatabaseInitializerService();
+            DatabaseInit.EnsureDatabaseExists(DBConnectionString, "ids_system");
             if (!databaseService.EnsureUsersExist(DBConnectionString))
             {
                 Shutdown();
