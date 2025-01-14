@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NetworkMonitor.Repository;
+using NetworkMonitor.Configuration;
 
 namespace ApiServer.Controllers
 {
@@ -13,7 +14,7 @@ namespace ApiServer.Controllers
         {
             try
             {
-                string connectionString = "Host=localhost;Username=postgres;Password=postgres;Database=ids_system";
+                string connectionString = NetworkMonitor.Configuration.ConfigurationManager.GetSetting("ConnectionString");
                 var user = UserRepository.Authenticate(connectionString, loginRequest.Username, loginRequest.Password);
 
                 if (user == null)

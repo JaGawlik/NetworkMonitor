@@ -6,6 +6,7 @@ using NetworkMonitor.Database;
 using NetworkMonitor.Repository;
 using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
+using NetworkMonitor.Configuration;
 
 namespace NetworkMonitor
 {
@@ -47,7 +48,18 @@ namespace NetworkMonitor
 
             // Inicjalizacja bazy danych i sprawdzanie użytkowników
             var databaseService = new DatabaseInitializerService();
-            DBConnectionString = databaseService.InitializeDatabase("localhost", 5432, "postgres", "postgres", "postgres", "ids_system");
+            //DBConnectionString = databaseService.InitializeDatabase("localhost", 5432, "postgres", "postgres", "postgres", "ids_system");
+            DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
+            if (string.IsNullOrEmpty(DBConnectionString))
+            {
+                // Jeśli ConnectionString nie istnieje, ustaw domyślny i zapisz
+                ConfigurationManager.SetSetting("ConnectionString", "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres");
+                DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
+            }
+
+            // Upewnij się, że baza danych istnieje
+            //databaseService.EnsureDatabaseExists(DBConnectionString);
+
 
             if (!databaseService.EnsureUsersExist(DBConnectionString))
             {

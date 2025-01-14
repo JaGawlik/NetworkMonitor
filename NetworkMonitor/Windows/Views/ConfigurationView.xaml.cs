@@ -51,7 +51,6 @@ namespace NetworkMonitor.Windows.Views
 
             if (openFileDialog.ShowDialog() == true)
             {
-                //var viewModel = DataContext as ConfigurationViewModel;
                 if (viewModel != null)
                 {
                     viewModel.LogFilePath = openFileDialog.FileName;

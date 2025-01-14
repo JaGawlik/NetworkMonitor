@@ -43,6 +43,7 @@ namespace NetworkMonitor.Configuration
                 "LogFilePath" => Settings.SnortLogPath,
                 "ApiAddress" => Settings.ApiUrl,
                 "SnortInstallationPath" => Settings.SnortInstallationPath,
+                "ConnectionString" => Settings.DatabaseSettings.ConnectionString,
                 _ => throw new ArgumentException($"Nieznany klucz ustawienia: {key}")
             };
         }
@@ -60,6 +61,9 @@ namespace NetworkMonitor.Configuration
                 case "SnortInstallationPath":
                     Settings.SnortInstallationPath = value; 
                     break;
+                case "ConnectionString":
+                    Settings.DatabaseSettings.ConnectionString = value;
+                    break;
                 default:
                     throw new ArgumentException($"Nieznany klucz ustawienia: {key}");
             }
@@ -71,5 +75,12 @@ namespace NetworkMonitor.Configuration
         public string SnortLogPath { get; set; } = @"C:\Snort\log\alert.ids";
         public string ApiUrl { get; set; } = "http://localhost:5136";
         public string SnortInstallationPath { get; set; } = @"C:\Snort";
+
+        public DatabaseSettings DatabaseSettings { get; set; } = new DatabaseSettings();
+    }
+
+    public class DatabaseSettings
+    {
+        public string ConnectionString { get; set; } = "Host=localhost;Port=5432;Database=mydb;Username=myuser;Password=mypassword";
     }
 }
