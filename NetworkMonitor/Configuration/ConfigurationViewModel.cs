@@ -145,7 +145,6 @@ namespace NetworkMonitor.Configuration
             LogFilePath = ConfigurationManager.GetSetting("LogFilePath");
             ApiAddress = ConfigurationManager.GetSetting("ApiAddress");
             SnortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
-            //ConnectionString = ConfigurationManager.GetSetting("ConnectionString");
         }
         public void SaveSettings()
         {

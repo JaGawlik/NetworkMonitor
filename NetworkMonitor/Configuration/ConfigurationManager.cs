@@ -81,6 +81,6 @@ namespace NetworkMonitor.Configuration
 
     public class DatabaseSettings
     {
-        public string ConnectionString = "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres";
+        public string ConnectionString { get; set; } = "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres";
     }
 }
