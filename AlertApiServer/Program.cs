@@ -14,6 +14,15 @@ namespace AlertApiServer
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ListenAnyIP(5136); // HTTP
+                options.ListenAnyIP(7270, listenOptions =>
+                {
+                    listenOptions.UseHttps(); // HTTPS
+                });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
