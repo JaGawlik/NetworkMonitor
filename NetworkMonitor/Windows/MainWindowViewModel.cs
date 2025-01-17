@@ -117,16 +117,20 @@ namespace NetworkMonitor
 
         private void GroupAndDisplayAlerts(List<Alert> alerts)
         {
+            //SaveExpandedStates();
+
             var groupedAlerts = alerts
                 .GroupBy(a => a.DestinationIp)
                 .Select(group => new AlertGroupViewModel
                 {
                     DestinationIp = group.Key,
-                    Alerts = new ObservableCollection<Alert>(group.ToList()), // Poprawka: Użycie ObservableCollection
-                    IsExpanded = false // Domyślnie grupy są zwinięte
+                    Alerts = new ObservableCollection<Alert>(group.ToList()), 
+                    IsExpanded = false 
                 });
 
             AlertGroupViewModels = new ObservableCollection<AlertGroupViewModel>(groupedAlerts);
+
+           // RestoreExpandedStates();
         }
 
 
@@ -140,9 +144,7 @@ namespace NetworkMonitor
                 // Filtrowanie alertów w zależności od roli użytkownika
                 if (CurrentUser.Role == "guest")
                 {
-                    newAlerts = newAlerts
-                        .Where(a => a.DestinationIp == _localIp)
-                        .ToList();
+                    newAlerts = newAlerts.Where(a => a.DestinationIp == _localIp).ToList();
                 }
 
                 if (newAlerts.Any())
@@ -165,7 +167,8 @@ namespace NetworkMonitor
                             AlertGroupViewModels.Add(new AlertGroupViewModel
                             {
                                 DestinationIp = alert.DestinationIp,
-                                Alerts = new ObservableCollection<Alert> { alert } // Poprawka: Użycie ObservableCollection
+                                Alerts = new ObservableCollection<Alert> { alert },
+                                IsExpanded = false
                             });
                         }
                     }
@@ -178,7 +181,6 @@ namespace NetworkMonitor
                 Console.WriteLine($"Błąd podczas sprawdzania nowych alertów: {ex.Message}");
             }
         }
-
 
         private void SortGroupsByLatestAlert()
         {
@@ -228,33 +230,6 @@ namespace NetworkMonitor
             }
         }
 
-        private Dictionary<string, bool> _expandedStates = new();
-
-        private void SaveExpandedStates()
-        {
-            foreach (var group in AlertGroups)
-            {
-                if (_expandedStates.ContainsKey(group.DestinationIp))
-                {
-                    _expandedStates[group.DestinationIp] = group.IsExpanded;
-                }
-                else
-                {
-                    _expandedStates.Add(group.DestinationIp, group.IsExpanded);
-                }
-            }
-        }
-
-        private void RestoreExpandedStates()
-        {
-            foreach (var group in AlertGroups)
-            {
-                if (_expandedStates.TryGetValue(group.DestinationIp, out var isExpanded))
-                {
-                    group.IsExpanded = isExpanded;
-                }
-            }
-        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
