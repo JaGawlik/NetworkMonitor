@@ -4,11 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:NetworkMonitor.Windows.Views"
-             xmlns:model="clr-namespace:NetworkMonitor.Model"
+             xmlns:model="clr-namespace:NetworkMonitor.Model" xmlns:networkmonitor="clr-namespace:NetworkMonitor" d:DataContext="{d:DesignInstance Type=networkmonitor:MainWindowViewModel}"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <TreeView ItemsSource="{Binding AlertGroups}" Margin="10">
+        <!--<TreeView ItemsSource="{Binding AlertGroups}" Margin="10">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type model:AlertGroup}" ItemsSource="{Binding Alerts}">
                     <TextBlock Text="{Binding DestinationIp}" FontWeight="Bold" />
@@ -22,6 +22,19 @@
                     </HierarchicalDataTemplate.ItemTemplate>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
-        </TreeView>
+        </TreeView>-->
+        <DataGrid ItemsSource="{Binding AlertGroups}" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Destination IP" Binding="{Binding DestinationIp}" />
+                <DataGridTextColumn Header="Alert Count" Binding="{Binding Alerts.Count}" />
+                <DataGridTemplateColumn Header="Actions">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Zmień status" Command="{Binding DataContext.UpdateAlertStatusCommand, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" CommandParameter="{Binding Id}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </UserControl>

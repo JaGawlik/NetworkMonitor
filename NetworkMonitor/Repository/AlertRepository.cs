@@ -3,6 +3,8 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,39 +12,42 @@ namespace NetworkMonitor.Repository
 {
     internal class AlertRepository
     {
-        public static List<Alert> GetAlerts(string connectionString)
+        private readonly string _apiUrl;
+
+        public AlertRepository(string apiUrl)
         {
-            Console.WriteLine("Pobieranie alertów z bazy danych...");
-            using var connection = new NpgsqlConnection(connectionString);
-            connection.Open();
+            _apiUrl = apiUrl;
+        }
+        public async Task<List<Alert>> GetAlertsAsync(string ip = null, string assignedIp = null)
+        {
+            using var httpClient = new HttpClient();
+            string url = $"{_apiUrl}/api/alerts";
 
-            string query = @"
-                SELECT id, timestamp, alert_message, source_ip, destination_ip, protocol, status, snort_instance
-                FROM alerts
-                ORDER BY timestamp DESC";
+            if (!string.IsNullOrEmpty(ip))
+                url += $"?ip={ip}";
+            else if (!string.IsNullOrEmpty(assignedIp))
+                url += $"?assignedIp={assignedIp}";
 
-            using var command = new NpgsqlCommand(query, connection);
-            using var reader = command.ExecuteReader();
+            var response = await httpClient.GetAsync(url);
 
-            var alerts = new List<Alert>();
-            while (reader.Read())
+            if (response.IsSuccessStatusCode)
             {
-                alerts.Add(new Alert
-                {
-                    Id = reader.GetInt32(0),
-                    Timestamp = reader.GetDateTime(1),
-                    AlertMessage = reader.GetString(2),
-                    SourceIp = reader.GetString(3),
-                    DestinationIp = reader.GetString(4),
-                    Protocol = reader.GetString(5),
-                    Status = reader.GetString(6),
-                    SnortInstance = reader.IsDBNull(7) ? null : reader.GetString(7)
-                });
+                return await response.Content.ReadFromJsonAsync<List<Alert>>();
             }
 
-            Console.WriteLine($"Pobrano {alerts.Count} alertów.");
-            return alerts;
+            throw new Exception($"Błąd podczas pobierania alertów: {response.StatusCode}");
+
         }
 
+        public async Task UpdateAlertStatusAsync(int alertId, string newStatus)
+        {
+            using var httpClient = new HttpClient();
+            var response = await httpClient.PutAsJsonAsync($"{_apiUrl}/api/alerts/{alertId}/status", newStatus);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Błąd podczas aktualizacji statusu alertu: {response.StatusCode}");
+            }
+        }
     }
 }

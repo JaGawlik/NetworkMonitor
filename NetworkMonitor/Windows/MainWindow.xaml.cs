@@ -23,7 +23,7 @@ namespace NetworkMonitor
                 Application.Current.Shutdown();
             };
 
-            DataContext = new MainWindowViewModel(user, connectionString);
+            DataContext = new MainWindowViewModel(user);
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)

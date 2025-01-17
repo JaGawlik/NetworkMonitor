@@ -3,7 +3,11 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Threading;
 using NetworkMonitor.Configuration;
 using NetworkMonitor.Model;
@@ -16,6 +20,8 @@ namespace NetworkMonitor
     {
         private int _lastMaxId = 0;
         private DispatcherTimer _timer;
+
+        public ICommand UpdateAlertStatusCommand { get; }
 
         private User _currentUser;
         public User CurrentUser
@@ -39,6 +45,7 @@ namespace NetworkMonitor
             }
         }
 
+        private int _selectedTabIndex;
         public int SelectedTabIndex
         {
             get => _selectedTabIndex;
@@ -50,18 +57,19 @@ namespace NetworkMonitor
             }
         }
 
-        private int _selectedTabIndex;
-
         public ObservableCollection<AlertGroup> AlertGroups { get; set; } = new ObservableCollection<AlertGroup>();
 
         public string ConnectionString { get; }
 
-        private string _localIp = GetLocalIpAddress();
+        private string _localIp = ConfigurationManager.GetLocalIpAddress();
 
-        public MainWindowViewModel(User user, string connectionString)
+        private readonly AlertRepository _alertRepository;
+        public MainWindowViewModel(User user)
         {
             CurrentUser = user ?? new User { Role = "guest", Username = "Niezalogowany" };
-            ConnectionString = connectionString;
+            _alertRepository = new AlertRepository(ConfigurationManager.GetSetting("ApiAddress"));
+
+            UpdateAlertStatusCommand = new RelayCommand<int>(async (alertId) => await UpdateAlertStatus(alertId, "resolved"));
 
             SelectedTabIndex = 0;
 
@@ -75,22 +83,28 @@ namespace NetworkMonitor
             _timer.Start();
         }
 
-        public void LoadAlerts()
+        public async void LoadAlerts()
         {
-            var allAlerts = AlertRepository.GetAlerts(ConnectionString) ?? new List<Alert>();
-
-            switch (CurrentUser.Role)
+            try
             {
-                case "guest":
-                    allAlerts = allAlerts.Where(a => a.DestinationIp == _localIp).ToList();
-                    break;
+                List<Alert> alerts = CurrentUser.Role switch
+                {
+                    "guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
+                    "user" when !string.IsNullOrEmpty(CurrentUser.AssignedIp) => await _alertRepository.GetAlertsAsync(assignedIp: CurrentUser.AssignedIp),
+                    _ => await _alertRepository.GetAlertsAsync()
+                };
 
-                case "user":
-                    allAlerts = allAlerts.Where(a => a.DestinationIp == CurrentUser.AssignedIp).ToList();
-                    break;
+                GroupAndDisplayAlerts(alerts);
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas ładowania alertów: {ex.Message}");
+            }
+        }
 
-            var groupedAlerts = allAlerts
+        private void GroupAndDisplayAlerts(List<Alert> alerts)
+        {
+            var groupedAlerts = alerts
                 .GroupBy(a => a.DestinationIp)
                 .Select(group => new AlertGroup
                 {
@@ -105,45 +119,52 @@ namespace NetworkMonitor
             }
         }
 
-        private void CheckForNewAlerts(object sender, EventArgs e)
+        private async void CheckForNewAlerts(object sender, EventArgs e)
         {
-            var newAlerts = AlertRepository.GetAlerts(ConnectionString)
-                                           .Where(a => a.Id > _lastMaxId)
-                                           .ToList();
-
-            if (CurrentUser.Role == "guest")
+            try
             {
-                newAlerts = newAlerts
-                    .Where(a => a.DestinationIp == _localIp)
-                    .ToList();
-            }
+                // Pobierz nowe alerty z API
+                var newAlerts = await _alertRepository.GetAlertsAsync();
 
-            if (newAlerts.Any())
-            {
-                _lastMaxId = newAlerts.Max(a => a.Id);
-
-                foreach (var alert in newAlerts)
+                // Filtrowanie alertów w zależności od roli użytkownika
+                if (CurrentUser.Role == "guest")
                 {
-                    var existingGroup = AlertGroups.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
-
-                    if (existingGroup != null)
-                    {
-                        if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
-                        {
-                            existingGroup.Alerts.Add(alert);
-                        }
-                    }
-                    else
-                    {
-                        AlertGroups.Add(new AlertGroup
-                        {
-                            DestinationIp = alert.DestinationIp,
-                            Alerts = new List<Alert> { alert }
-                        });
-                    }
+                    newAlerts = newAlerts
+                        .Where(a => a.DestinationIp == _localIp)
+                        .ToList();
                 }
 
-                SortGroupsByLatestAlert();
+                if (newAlerts.Any())
+                {
+                    _lastMaxId = newAlerts.Max(a => a.Id);
+
+                    foreach (var alert in newAlerts)
+                    {
+                        var existingGroup = AlertGroups.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
+
+                        if (existingGroup != null)
+                        {
+                            if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
+                            {
+                                existingGroup.Alerts.Add(alert);
+                            }
+                        }
+                        else
+                        {
+                            AlertGroups.Add(new AlertGroup
+                            {
+                                DestinationIp = alert.DestinationIp,
+                                Alerts = new List<Alert> { alert }
+                            });
+                        }
+                    }
+
+                    SortGroupsByLatestAlert();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas sprawdzania nowych alertów: {ex.Message}");
             }
         }
 
@@ -160,21 +181,6 @@ namespace NetworkMonitor
             }
         }
 
-        private static string GetLocalIpAddress()
-        {
-            string hostName = Dns.GetHostName();
-            var addresses = Dns.GetHostAddresses(hostName);
-
-            foreach (var address in addresses)
-            {
-                if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                {
-                    return address.ToString();
-                }
-            }
-
-            throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
-        }
         private void UpdateCurrentView()
         {
             if (SelectedTabIndex == 0) 
@@ -191,6 +197,22 @@ namespace NetworkMonitor
                 {
                     DataContext = configViewModel
                 };
+            }
+        }
+
+        public async Task UpdateAlertStatus(int alertId, string newStatus)
+        {
+            try
+            {
+                await _alertRepository.UpdateAlertStatusAsync(alertId, newStatus);
+                Console.WriteLine($"Zaktualizowano status alertu o ID {alertId} na {newStatus}");
+
+                LoadAlerts();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas aktualizacji alertu: {ex.Message}");
+                MessageBox.Show($"Błąd podczas aktualizacji alertu: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

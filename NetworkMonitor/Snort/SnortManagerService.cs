@@ -18,6 +18,8 @@ namespace NetworkMonitor.Snort
             string arguments = $"-i 6 -c {Path.Combine(snortInstallationPath, "etc", "snort.conf")} -l {Path.Combine(snortInstallationPath, "log")} -A fast -N";
             string apiUrl = "http://localhost:5136";
 
+            string localIpAddress = ConfigurationManager.GetLocalIpAddress();
+
             var snortProcess = SnortManager.StartSnort(snortPath, arguments);
 
             if (snortProcess == null)
@@ -26,7 +28,7 @@ namespace NetworkMonitor.Snort
                 return null;
             }
 
-            var monitor = new SnortAlertMonitor(snortLogPath, apiUrl);
+            var monitor = new SnortAlertMonitor(snortLogPath, apiUrl, localIpAddress);
             Task.Run(() => monitor.StartMonitoringAsync());
 
             return snortProcess;

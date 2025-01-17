@@ -13,13 +13,16 @@ namespace NetworkMonitor.Snort
     internal class SnortAlertMonitor
     {
         private string _snortLogPath;
-        private string _apiUrl; 
+        private string _apiUrl;
+        private string _localIP;
         private Regex _regex;
 
-        public SnortAlertMonitor(string logPath, string apiUrl)
+        public SnortAlertMonitor(string logPath, string apiUrl, string localIP)
         {
             _snortLogPath = logPath;
             _apiUrl = apiUrl;
+            _localIP = localIP;
+
             _regex = new Regex(
                 @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[\d+:\d+:\d+\]\s(?<message>.*?)\s\[\*\*\]\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[\d\.]+)\s->\s(?<dstip>[\d\.]+)",
                 RegexOptions.Compiled
@@ -51,11 +54,10 @@ namespace NetworkMonitor.Snort
                         Console.WriteLine($"Przeczytano linię: {line}");
                         await ProcessLineAsync(line);
                     }
-                    else
-                    {
-                        // Sprawdzanie po chwili
-                        await Task.Delay(1000);
-                    }
+                    
+                    await FetchAlertsFromApiAsync(_localIP);
+
+                    await Task.Delay(3000);
                 }
             }
         }
@@ -116,6 +118,34 @@ namespace NetworkMonitor.Snort
                 else
                 {
                     Console.WriteLine($"Błąd podczas wysyłania alertu do API: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas komunikacji z API: {ex.Message}");
+            }
+        }
+
+        private async Task FetchAlertsFromApiAsync(string localIp)
+        {
+            using var httpClient = new HttpClient();
+            try
+            {
+                var response = await httpClient.GetAsync($"{_apiUrl}/api/alerts/{localIp}");
+                if (response.IsSuccessStatusCode)
+                {
+                    var alerts = await response.Content.ReadFromJsonAsync<List<Alert>>();
+                    if (alerts != null && alerts.Any())
+                    {
+                        foreach (var alert in alerts)
+                        {
+                            Console.WriteLine($"Odebrano alert z API: {alert.AlertMessage} od {alert.SourceIp} do {alert.DestinationIp}");
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Błąd podczas pobierania alertów: {response.StatusCode}");
                 }
             }
             catch (Exception ex)

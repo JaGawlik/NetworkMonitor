@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Runtime;
 using System.Text.Json;
 
@@ -68,7 +69,24 @@ namespace NetworkMonitor.Configuration
                     throw new ArgumentException($"Nieznany klucz ustawienia: {key}");
             }
         }
+        public static string GetLocalIpAddress()
+        {
+            string hostName = Dns.GetHostName();
+            var addresses = Dns.GetHostAddresses(hostName);
+
+            foreach (var address in addresses)
+            {
+                if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                {
+                    return address.ToString();
+                }
+            }
+
+            throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
+        }
     }
+
+
 
     public class ConfigurationSettings
     {
