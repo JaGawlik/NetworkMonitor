@@ -12,6 +12,7 @@ using System.Windows.Threading;
 using NetworkMonitor.Configuration;
 using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
+using NetworkMonitor.Windows;
 using NetworkMonitor.Windows.Views;
 
 namespace NetworkMonitor
@@ -57,7 +58,19 @@ namespace NetworkMonitor
             }
         }
 
-        public ObservableCollection<AlertGroup> AlertGroups { get; set; } = new ObservableCollection<AlertGroup>();
+        private ObservableCollection<AlertGroupViewModel> _alertGroupViewModels;
+
+        public ObservableCollection<AlertGroupViewModel> AlertGroupViewModels
+        {
+            get => _alertGroupViewModels;
+            set
+            {
+                _alertGroupViewModels = value;
+                OnPropertyChanged(nameof(AlertGroupViewModels));
+            }
+        }
+
+        public ObservableCollection<AlertGroupViewModel> AlertGroups { get; set; } = new ObservableCollection<AlertGroupViewModel>();
 
         public string ConnectionString { get; }
 
@@ -106,18 +119,16 @@ namespace NetworkMonitor
         {
             var groupedAlerts = alerts
                 .GroupBy(a => a.DestinationIp)
-                .Select(group => new AlertGroup
+                .Select(group => new AlertGroupViewModel
                 {
                     DestinationIp = group.Key,
-                    Alerts = group.ToList()
+                    Alerts = new ObservableCollection<Alert>(group.ToList()), // Poprawka: Użycie ObservableCollection
+                    IsExpanded = false // Domyślnie grupy są zwinięte
                 });
 
-            AlertGroups.Clear();
-            foreach (var group in groupedAlerts)
-            {
-                AlertGroups.Add(group);
-            }
+            AlertGroupViewModels = new ObservableCollection<AlertGroupViewModel>(groupedAlerts);
         }
+
 
         private async void CheckForNewAlerts(object sender, EventArgs e)
         {
@@ -140,7 +151,7 @@ namespace NetworkMonitor
 
                     foreach (var alert in newAlerts)
                     {
-                        var existingGroup = AlertGroups.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
+                        var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
 
                         if (existingGroup != null)
                         {
@@ -151,10 +162,10 @@ namespace NetworkMonitor
                         }
                         else
                         {
-                            AlertGroups.Add(new AlertGroup
+                            AlertGroupViewModels.Add(new AlertGroupViewModel
                             {
                                 DestinationIp = alert.DestinationIp,
-                                Alerts = new List<Alert> { alert }
+                                Alerts = new ObservableCollection<Alert> { alert } // Poprawka: Użycie ObservableCollection
                             });
                         }
                     }
@@ -167,6 +178,7 @@ namespace NetworkMonitor
                 Console.WriteLine($"Błąd podczas sprawdzania nowych alertów: {ex.Message}");
             }
         }
+
 
         private void SortGroupsByLatestAlert()
         {
@@ -213,6 +225,34 @@ namespace NetworkMonitor
             {
                 Console.WriteLine($"Błąd podczas aktualizacji alertu: {ex.Message}");
                 MessageBox.Show($"Błąd podczas aktualizacji alertu: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private Dictionary<string, bool> _expandedStates = new();
+
+        private void SaveExpandedStates()
+        {
+            foreach (var group in AlertGroups)
+            {
+                if (_expandedStates.ContainsKey(group.DestinationIp))
+                {
+                    _expandedStates[group.DestinationIp] = group.IsExpanded;
+                }
+                else
+                {
+                    _expandedStates.Add(group.DestinationIp, group.IsExpanded);
+                }
+            }
+        }
+
+        private void RestoreExpandedStates()
+        {
+            foreach (var group in AlertGroups)
+            {
+                if (_expandedStates.TryGetValue(group.DestinationIp, out var isExpanded))
+                {
+                    group.IsExpanded = isExpanded;
+                }
             }
         }
 
