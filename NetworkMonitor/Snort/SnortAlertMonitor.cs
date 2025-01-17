@@ -13,7 +13,7 @@ namespace NetworkMonitor.Snort
     internal class SnortAlertMonitor
     {
         private string _snortLogPath;
-        private string _apiUrl; // URL do API
+        private string _apiUrl; 
         private Regex _regex;
 
         public SnortAlertMonitor(string logPath, string apiUrl)
