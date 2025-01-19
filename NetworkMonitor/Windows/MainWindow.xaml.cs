@@ -7,9 +7,12 @@ namespace NetworkMonitor
 {
     public partial class MainWindow : Window
     {
-        public MainWindow(User user, string connectionString)
+        private readonly bool _isAdmin;
+        public MainWindow(User user, bool isAdmin)
         {
             InitializeComponent();
+
+            _isAdmin = isAdmin;
 
             this.Closing += (s, e) =>
             {
@@ -23,11 +26,16 @@ namespace NetworkMonitor
                 Application.Current.Shutdown();
             };
 
-            DataContext = new MainWindowViewModel(user);
+            DataContext = new MainWindowViewModel(user, _isAdmin);
+            _isAdmin = isAdmin;
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            if (_isAdmin) {
+                MessageBox.Show("Jesteś już zalogowany jako administrator.", "Logowanie", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
             var viewModel = DataContext as MainWindowViewModel;
 
             var loginWindow = new LoginWindow(viewModel.ConnectionString);
@@ -50,6 +58,15 @@ namespace NetworkMonitor
             MessageBox.Show("Wylogowano.", "Wylogowanie", MessageBoxButton.OK, MessageBoxImage.Information);
             Console.WriteLine("Wylogowano. Rola: guest");
             viewModel.LoadAlerts();
+        }
+
+        private void ConfigureUIForRole()
+        {
+            if (!_isAdmin)
+            {
+                // Ukryj przyciski administracyjne dla klienta
+                AdminPanel.Visibility = Visibility.Collapsed;
+            }
         }
     }
 }

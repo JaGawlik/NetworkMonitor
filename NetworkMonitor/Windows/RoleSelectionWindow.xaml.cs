@@ -19,7 +19,7 @@ namespace NetworkMonitor.Windows
     /// </summary>
     public partial class RoleSelectionWindow : Window
     {
-        public string SelectedRole { get; set; }
+        public string SelectedRole { get; private set; }
         public RoleSelectionWindow()
         {
             InitializeComponent();
@@ -29,12 +29,14 @@ namespace NetworkMonitor.Windows
         {
             SelectedRole = "Administrator";
             DialogResult = true;
+            Close();
         }
 
         private void UserButton_Click(object sender, RoutedEventArgs e)
         {
             SelectedRole = "User";
             DialogResult = true;
+            Close();
         }
     }
 }

@@ -7,12 +7,12 @@ using NetworkMonitor.Repository;
 using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
 using NetworkMonitor.Configuration;
+using NetworkMonitor.Model;
 
 namespace NetworkMonitor
 {
     public partial class App : Application
     {
-        private Process _snortProcess;
         public string DBConnectionString { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -24,64 +24,42 @@ namespace NetworkMonitor
                 if (args.ExceptionObject is Exception ex)
                 {
                     Console.WriteLine($"Unhandled exception: {ex.Message}\n{ex.StackTrace}");
-                    System.Windows.MessageBox.Show($"Unhandled exception: {ex.Message}\n{ex.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Unhandled exception: {ex.Message}\n{ex.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
 
             DispatcherUnhandledException += (sender, args) =>
             {
                 Console.WriteLine($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}");
-                System.Windows.MessageBox.Show($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"UI exception: {args.Exception.Message}\n{args.Exception.StackTrace}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 args.Handled = true;
             };
 
-            //var roleSectionWindow = new RoleSelectionWindow();
-            //if (roleSectionWindow.ShowDialog() == true)
-            //{
-            //    string selectedRole = roleSectionWindow.SelectedRole;
-
-            //    if (selectedRole == "Administrator")
-            //    {
-
-            //    }
-            //}
-
-            // Inicjalizacja bazy danych i sprawdzanie użytkowników
-            //DBConnectionString = databaseService.InitializeDatabase("localhost", 5432, "postgres", "postgres", "postgres", "ids_system");
-            //DatabaseInitializerService.InitializeDatabase();
-            DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
-            if (string.IsNullOrEmpty(DBConnectionString))
+            var roleSelectionWindow = new RoleSelectionWindow();
+            if (roleSelectionWindow.ShowDialog() == true)
             {
-                // Jeśli ConnectionString nie istnieje, ustaw domyślny i zapisz
-                ConfigurationManager.SetSetting("ConnectionString", "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres");
-                DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
-            }
+                string selectedRole = roleSelectionWindow.SelectedRole;
 
-            //Upewnienie bazy danych
-            var databaseService = new DatabaseInitializerService();
-            DatabaseInit.EnsureDatabaseExists(DBConnectionString, "ids_system");
-            if (!databaseService.EnsureUsersExist(DBConnectionString))
+                if (selectedRole == "Administrator")
+                {
+                    StartAsAdmin();
+                }
+                else if (selectedRole == "User")
+                {
+                    StartAsClient();
+                }
+                else
+                {
+                    Shutdown();
+                }
+            }
+            else
             {
                 Shutdown();
-                return;
             }
-
-            // Uruchamianie Snorta
-            var snortService = new SnortManagerService();
-            _snortProcess = snortService.StartSnort(DBConnectionString);
-
-            if (_snortProcess == null)
-            {
-                Shutdown();
-                return;
-            }
-
-            // Otwieranie głównego okna
-            var mainWindow = new MainWindow(null, DBConnectionString);
-            System.Windows.Application.Current.MainWindow = mainWindow;
-            mainWindow.Show();
         }
 
+        private Process _snortProcess;
         protected override void OnExit(ExitEventArgs e)
         {
             base.OnExit(e);
@@ -99,6 +77,49 @@ namespace NetworkMonitor
                     Console.WriteLine($"Wystąpił błąd podczas zatrzymywania Snorta: {ex.Message}");
                 }
             }
+        }
+
+        private void StartAsAdmin()
+        {
+            DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
+            if (string.IsNullOrEmpty(DBConnectionString))
+            {
+                // Ustaw domyślny ConnectionString i zapisz
+                ConfigurationManager.SetSetting("ConnectionString", "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres");
+                DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
+            }
+
+            var databaseService = new DatabaseInitializerService();
+            DatabaseInit.EnsureDatabaseExists(DBConnectionString, "ids_system");
+            if (!databaseService.EnsureUsersExist(DBConnectionString))
+            {
+                Shutdown();
+                return;
+            }
+
+            var mainWindow = new MainWindow(new User { Role = "Administrator" });
+            MainWindow = mainWindow;
+            mainWindow.Show();
+        }
+
+        private void StartAsClient()
+        {
+            string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
+            string logFilePath = ConfigurationManager.GetSetting("LogFilePath");
+
+            if (string.IsNullOrEmpty(apiUrl) || string.IsNullOrEmpty(logFilePath))
+            {
+                MessageBox.Show("Skonfiguruj API i ścieżkę do logów Snort.", "Błąd konfiguracji", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+                return;
+            }
+
+            var snortMonitor = new SnortAlertMonitor(logFilePath, apiUrl);
+            Task.Run(() => snortMonitor.StartMonitoringAsync());
+
+            var mainWindow = new MainWindow(new User { Role = "User" });
+            MainWindow = mainWindow;
+            mainWindow.Show();
         }
     }
 }

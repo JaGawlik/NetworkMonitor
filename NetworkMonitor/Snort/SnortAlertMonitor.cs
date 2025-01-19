@@ -17,11 +17,11 @@ namespace NetworkMonitor.Snort
         private string _localIP;
         private Regex _regex;
 
-        public SnortAlertMonitor(string logPath, string apiUrl, string localIP)
+        public SnortAlertMonitor(string logPath, string apiUrl)
         {
             _snortLogPath = logPath;
             _apiUrl = apiUrl;
-            _localIP = localIP;
+            _localIP = Configuration.ConfigurationManager.GetLocalIpAddress();
 
             _regex = new Regex(
                 @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[\d+:\d+:\d+\]\s(?<message>.*?)\s\[\*\*\]\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[\d\.]+)\s->\s(?<dstip>[\d\.]+)",
