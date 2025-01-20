@@ -28,7 +28,7 @@ namespace NetworkMonitor.Snort
                 return null;
             }
 
-            var monitor = new SnortAlertMonitor(snortLogPath, apiUrl, localIpAddress);
+            var monitor = new SnortAlertMonitor(snortLogPath, apiUrl);
             Task.Run(() => monitor.StartMonitoringAsync());
 
             return snortProcess;

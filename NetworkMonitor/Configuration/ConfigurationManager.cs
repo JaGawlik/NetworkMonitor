@@ -45,6 +45,7 @@ namespace NetworkMonitor.Configuration
                 "ApiAddress" => Settings.ApiUrl,
                 "SnortInstallationPath" => Settings.SnortInstallationPath,
                 "ConnectionString" => Settings.DatabaseSettings.ConnectionString,
+                "Role" => Settings.Role,
                 _ => throw new ArgumentException($"Nieznany klucz ustawienia: {key}")
             };
         }
@@ -61,6 +62,9 @@ namespace NetworkMonitor.Configuration
                     break;
                 case "SnortInstallationPath":
                     Settings.SnortInstallationPath = value; 
+                    break;
+                case "Role":
+                    Settings.Role = value;
                     break;
                 case "ConnectionString":
                     Settings.DatabaseSettings.ConnectionString = value;
@@ -90,15 +94,17 @@ namespace NetworkMonitor.Configuration
 
     public class ConfigurationSettings
     {
-        public string SnortLogPath { get; set; } = @"C:\Snort\log\alert.ids";
-        public string ApiUrl { get; set; } = "http://localhost:5136";
-        public string SnortInstallationPath { get; set; } = @"C:\Snort";
+        public string SnortLogPath { get; set; }
+        public string ApiUrl { get; set; } 
+        public string SnortInstallationPath { get; set; } 
+
+        public string Role { get; set; } = "";
 
         public DatabaseSettings DatabaseSettings { get; set; } = new DatabaseSettings();
     }
 
     public class DatabaseSettings
     {
-        public string ConnectionString { get; set; } = "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres";
+        public string ConnectionString { get; set; } 
     }
 }

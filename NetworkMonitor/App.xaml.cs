@@ -35,29 +35,42 @@ namespace NetworkMonitor
                 args.Handled = true;
             };
 
-            var roleSelectionWindow = new RoleSelectionWindow();
-            if (roleSelectionWindow.ShowDialog() == true)
-            {
-                string selectedRole = roleSelectionWindow.SelectedRole;
 
-                if (selectedRole == "Administrator")
-                {
-                    StartAsAdmin();
-                }
-                else if (selectedRole == "User")
-                {
-                    StartAsClient();
-                }
-                else
-                {
-                    Shutdown();
-                }
-            }
-            else
+            var role = ConfigurationManager.GetSetting("Role");
+
+            if (string.IsNullOrEmpty(role))
             {
-                Shutdown();
+                var roleWindows = new RoleSelectionWindow();
+                if (roleWindows.ShowDialog() == true)
+                {
+                    role = roleWindows.SelectedRole;
+                    ConfigurationManager.SetSetting("Role", role);
+                    ConfigurationManager.SaveSettings();
+
+                    if (role == "Administrator")
+                    {
+                        DatabaseService databaseService = new DatabaseService();
+                        databaseService.InitializeDatabase();
+
+                        if (!databaseService.EnsureUsersExist())
+                        {
+                            Shutdown();
+                            return;
+                        }
+                    }
+                    else if (role == "User")
+                    {
+                        StartAsClient();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Nieznana rola użytkownika.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Shutdown();
+                    }
+
+                }
             }
-        }
+        }    
 
         private Process _snortProcess;
         protected override void OnExit(ExitEventArgs e)
@@ -77,29 +90,6 @@ namespace NetworkMonitor
                     Console.WriteLine($"Wystąpił błąd podczas zatrzymywania Snorta: {ex.Message}");
                 }
             }
-        }
-
-        private void StartAsAdmin()
-        {
-            DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
-            if (string.IsNullOrEmpty(DBConnectionString))
-            {
-                // Ustaw domyślny ConnectionString i zapisz
-                ConfigurationManager.SetSetting("ConnectionString", "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres");
-                DBConnectionString = ConfigurationManager.GetSetting("ConnectionString");
-            }
-
-            var databaseService = new DatabaseInitializerService();
-            DatabaseInit.EnsureDatabaseExists(DBConnectionString, "ids_system");
-            if (!databaseService.EnsureUsersExist(DBConnectionString))
-            {
-                Shutdown();
-                return;
-            }
-
-            var mainWindow = new MainWindow(new User { Role = "Administrator" });
-            MainWindow = mainWindow;
-            mainWindow.Show();
         }
 
         private void StartAsClient()

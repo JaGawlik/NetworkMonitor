@@ -8,11 +8,9 @@ namespace NetworkMonitor
     public partial class MainWindow : Window
     {
         private readonly bool _isAdmin;
-        public MainWindow(User user, bool isAdmin)
+        public MainWindow(User user)
         {
             InitializeComponent();
-
-            _isAdmin = isAdmin;
 
             this.Closing += (s, e) =>
             {
@@ -26,8 +24,7 @@ namespace NetworkMonitor
                 Application.Current.Shutdown();
             };
 
-            DataContext = new MainWindowViewModel(user, _isAdmin);
-            _isAdmin = isAdmin;
+            DataContext = new MainWindowViewModel(user);;
         }
 
         private void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -65,7 +62,7 @@ namespace NetworkMonitor
             if (!_isAdmin)
             {
                 // Ukryj przyciski administracyjne dla klienta
-                AdminPanel.Visibility = Visibility.Collapsed;
+                //AdminPanel.Visibility = Visibility.Collapsed;
             }
         }
     }

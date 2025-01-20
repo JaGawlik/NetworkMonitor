@@ -17,6 +17,7 @@ namespace NetworkMonitor.Configuration
         private string _username;
         private string _password;
         private string _connectionString;
+        private string _postgresInstallationPath;
 
         public string LogFilePath
         {
@@ -104,6 +105,18 @@ namespace NetworkMonitor.Configuration
             {
                 _connectionString = value;
                 OnPropertyChanged(nameof(ConnectionString));
+            }
+        }
+        public string PostgresInstallationPath
+        {
+            get => _postgresInstallationPath;
+            set
+            {
+                if (_postgresInstallationPath != value)
+                {
+                    _postgresInstallationPath = value;
+                    OnPropertyChanged(nameof(PostgresInstallationPath));
+                }
             }
         }
 

@@ -1,0 +1,33 @@
+﻿<Window x:Class="NetworkMonitor.Windows.DatabaseConfigWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NetworkMonitor.Windows"
+        mc:Ignorable="d"
+        Title="DatabaseConfigWindow" Height="450" Width="800">
+    <Grid>
+        <StackPanel Margin="20">
+
+            <TextBlock Text="Host:" Margin="0,0,0,5" />
+            <TextBox Name="HostTextBox" Text="localhost" Margin="0,0,0,10" />
+
+            <TextBlock Text="Port:" Margin="0,0,0,5" />
+            <TextBox Name="PortTextBox" Text="5432" Margin="0,0,0,10" />
+
+            <TextBlock Text="Nazwa bazy danych PostgreSQL:" Grid.Row="4" />
+            <TextBox Name="SQLDatabaseNameTextBox" Grid.Row="4" Margin="0,0,0,10" Text="postgres" />
+
+            <TextBlock Text="Użytkownik:" Margin="0,0,0,5" />
+            <TextBox Name="UsernameTextBox" Text="postgres" Margin="0,0,0,10" />
+
+            <TextBlock Text="Hasło:" Margin="0,0,0,5" />
+            <PasswordBox Name="PasswordBox" Margin="0,0,0,10" />
+
+            <TextBlock Text="Nazwa bazy danych:" Margin="0,0,0,5" />
+            <TextBox Name="DatabaseNameTextBox" Text="ids_system" Margin="0,0,0,10" />
+
+            <Button Content="Zapisz i Zainicjalizuj" Click="SaveAndInitialize_Click" Width="150" HorizontalAlignment="Center" />
+        </StackPanel>
+    </Grid>
+</Window>
