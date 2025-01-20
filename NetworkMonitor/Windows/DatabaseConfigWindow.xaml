@@ -15,8 +15,10 @@
             <TextBlock Text="Port:" Margin="0,0,0,5" />
             <TextBox Name="PortTextBox" Text="5432" Margin="0,0,0,10" />
 
-            <TextBlock Text="Nazwa bazy danych PostgreSQL:" Grid.Row="4" />
-            <TextBox Name="SQLDatabaseNameTextBox" Grid.Row="4" Margin="0,0,0,10" Text="postgres" />
+            <!--<TextBlock Text="Nazwa bazy danych PostgreSQL:" Margin="0,0,0,5" />
+            <ComboBox Name="SQLDatabaseNameComboBox" Margin="0,0,0,10" />
+            <Button Content="Odśwież listę baz danych" Click="RefreshDatabaseList_Click" Width="200" HorizontalAlignment="Center" />-->
+
 
             <TextBlock Text="Użytkownik:" Margin="0,0,0,5" />
             <TextBox Name="UsernameTextBox" Text="postgres" Margin="0,0,0,10" />

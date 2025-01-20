@@ -42,7 +42,7 @@ namespace NetworkMonitor.Database
                             dbConfigWindow.Port,
                             dbConfigWindow.Username,
                             dbConfigWindow.Password,
-                            dbConfigWindow.SQLDatabaseName
+                            dbConfigWindow.DatabaseNameTextBox.Text
                         );
 
                         // Zapis connection stringa do pliku config.json
@@ -58,10 +58,10 @@ namespace NetworkMonitor.Database
                 }
 
                 // Tworzenie bazy danych, jeśli nie istnieje
-                EnsureDatabaseExists(connectionString,dbConfigWindow.DatabaseName);
+                EnsureDatabaseExists(connectionString,dbConfigWindow.UserDatabaseName);
 
                 // Zapisanie finalnego connection stringa w config.json
-                string finalConnectionString = connectionString.Replace("Database=postgres", $"Database={dbConfigWindow.DatabaseName}");
+                string finalConnectionString = connectionString.Replace("Database=postgres", $"Database={dbConfigWindow.UserDatabaseName}");
                 ConfigurationManager.SetSetting("ConnectionString", finalConnectionString);
                 ConfigurationManager.SaveSettings();
 
