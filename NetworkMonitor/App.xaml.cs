@@ -8,6 +8,8 @@ using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
 using NetworkMonitor.Configuration;
 using NetworkMonitor.Model;
+using NetworkMonitor.Snort;
+using System.Net;
 
 namespace NetworkMonitor
 {
@@ -46,29 +48,25 @@ namespace NetworkMonitor
                     role = roleWindows.SelectedRole;
                     ConfigurationManager.SetSetting("Role", role);
                     ConfigurationManager.SaveSettings();
-
-                    if (role == "Administrator")
-                    {
-                        DatabaseService databaseService = new DatabaseService();
-                        databaseService.InitializeDatabase();
-
-                        if (!databaseService.EnsureUsersExist())
-                        {
-                            Shutdown();
-                            return;
-                        }
-                    }
-                    else if (role == "User")
-                    {
-                        StartAsClient();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Nieznana rola użytkownika.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-                        Shutdown();
-                    }
-
                 }
+            }
+
+            if (role == "Administrator")
+            {
+                DatabaseService databaseService = new DatabaseService();
+                databaseService.InitializeDatabase();
+
+                if (!databaseService.EnsureUsersExist())
+                {
+                    Shutdown();
+                    return;
+                }
+
+                StartProgram(role);
+            }
+            else if (role == "User")
+            {
+                StartProgram(role);
             }
         }    
 
@@ -92,22 +90,41 @@ namespace NetworkMonitor
             }
         }
 
-        private void StartAsClient()
+        //private void StartMainProgramAsAdministrator()
+        //{
+        //    try
+        //    {
+        //        var snortManager = new SnortManagerService();
+        //        _snortProcess = snortManager.StartSnort();
+
+        //        if (_snortProcess == null)
+        //        {
+        //            Shutdown();
+        //            return;
+        //        }
+
+        //        // Utworzenie okna głównego
+        //        var mainWindow = new MainWindow(new User { Role = "Administrator" });
+
+        //        // Powiązanie danych (np. pobranie alertów z bazy danych)
+        //        var alertRepository = new AlertRepository(ConfigurationManager.GetSetting("ApiAddress"));
+        //        //mainWindow.DataContext = new AlertsViewModel(alertRepository.GetAlertsAsync());
+
+        //        // Wyświetlenie okna
+        //        MainWindow = mainWindow;
+        //        mainWindow.Show();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Błąd podczas uruchamiania programu: {ex.Message}");
+        //        MessageBox.Show($"Błąd podczas uruchamiania programu: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+        //        Shutdown();
+        //    }
+        //}
+
+        private void StartProgram(string role)
         {
-            string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
-            string logFilePath = ConfigurationManager.GetSetting("LogFilePath");
-
-            if (string.IsNullOrEmpty(apiUrl) || string.IsNullOrEmpty(logFilePath))
-            {
-                MessageBox.Show("Skonfiguruj API i ścieżkę do logów Snort.", "Błąd konfiguracji", MessageBoxButton.OK, MessageBoxImage.Error);
-                Shutdown();
-                return;
-            }
-
-            var snortMonitor = new SnortAlertMonitor(logFilePath, apiUrl);
-            Task.Run(() => snortMonitor.StartMonitoringAsync());
-
-            var mainWindow = new MainWindow(new User { Role = "User" });
+            var mainWindow = new MainWindow(new User { Role = role });
             MainWindow = mainWindow;
             mainWindow.Show();
         }

@@ -1,7 +1,9 @@
-﻿using Npgsql;
+﻿using NetworkMonitor.Utilities;
+using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -50,6 +52,9 @@ namespace NetworkMonitor.Windows
                 return;
             }
 
+            string connectionString = $"Host={Host};Port={Port};Username={Username};Password={Password};Database={UserDatabaseName}";
+            AppSettingsManager.UpdateConnectionString(connectionString);
+
 
 
             DialogResult = true;
@@ -87,5 +92,6 @@ namespace NetworkMonitor.Windows
                 MessageBox.Show($"Błąd podczas pobierania listy baz danych: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
     }
 }

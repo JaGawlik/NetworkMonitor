@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Npgsql;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using NetworkMonitor.Model;
 
 namespace AlertApiServer.Controllers
@@ -9,7 +12,13 @@ namespace AlertApiServer.Controllers
     [Route("api/alerts")]
     public class AlertsController : ControllerBase
     {
-        private const string ConnectionString = "Host=localhost;Username=postgres;Password=postgres;Database=ids_system";
+        private readonly string _connectionString;
+
+        public AlertsController(IConfiguration configuration)
+        {
+            // Pobierz connection string z konfiguracji
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
 
         [HttpPost]
         public IActionResult ReceiveAlert([FromBody] Alert alert)
@@ -17,7 +26,7 @@ namespace AlertApiServer.Controllers
             Console.WriteLine($"Otrzymano alert: {alert.AlertMessage} od {alert.SourceIp} do {alert.DestinationIp}");
             try
             {
-                using var conn = new NpgsqlConnection(ConnectionString);
+                using var conn = new NpgsqlConnection(_connectionString);
                 conn.Open();
 
                 string query = @"
@@ -46,14 +55,12 @@ namespace AlertApiServer.Controllers
         {
             try
             {
-                using var conn = new NpgsqlConnection(ConnectionString);
+                using var conn = new NpgsqlConnection(_connectionString);
                 conn.Open();
 
-                // Podstawowe zapytanie
                 string query = "SELECT * FROM alerts";
-
-                // Filtruj alerty na podstawie parametrów
                 List<string> conditions = new List<string>();
+
                 if (!string.IsNullOrEmpty(ip))
                 {
                     conditions.Add("destination_ip = @ip");
@@ -113,8 +120,7 @@ namespace AlertApiServer.Controllers
         {
             try
             {
-                string connectionString = "Host=localhost;Username=postgres;Password=postgres;Database=ids_system";
-                using var conn = new NpgsqlConnection(connectionString);
+                using var conn = new NpgsqlConnection(_connectionString);
                 conn.Open();
 
                 string query = @"

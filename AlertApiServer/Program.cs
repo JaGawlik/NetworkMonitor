@@ -1,4 +1,3 @@
-
 namespace AlertApiServer
 {
     public class Program
@@ -7,13 +6,17 @@ namespace AlertApiServer
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Dodanie konfiguracji do dependency injection
+            builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
+            // Rejestracja kontrolerów
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+            // Swagger/OpenAPI
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            // Konfiguracja serwera Kestrel
             builder.WebHost.ConfigureKestrel(options =>
             {
                 options.ListenAnyIP(5136); // HTTP
@@ -23,9 +26,13 @@ namespace AlertApiServer
                 });
             });
 
+            // Pobranie connection string dla logowania (opcjonalne do diagnostyki)
+            string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            Console.WriteLine($"Connection String: {connectionString}");
+
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            // Konfiguracja middleware
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -36,8 +43,10 @@ namespace AlertApiServer
 
             app.UseAuthorization();
 
+            // Mapowanie kontrolerów
             app.MapControllers();
 
+            // Uruchomienie aplikacji
             app.Run();
         }
     }

@@ -1,8 +1,9 @@
 {
-  "SnortLogPath": "C:\\Snort\\log\\alert.ids",
-  "ApiUrl": "http://localhost:5136",
-  "SnortInstallationPath": "C:\\Snort",
+  "SnortLogPath": null,
+  "ApiUrl": null,
+  "SnortInstallationPath": null,
+  "Role": "",
   "DatabaseSettings": {
-    "ConnectionString": "Host=localhost;Port=5432;Database=ids_system;Username=postgres;Password=postgres"
+    "ConnectionString": null
   }
 }

@@ -27,7 +27,7 @@ namespace NetworkMonitor
             DataContext = new MainWindowViewModel(user);;
         }
 
-        private void LoginButton_Click(object sender, RoutedEventArgs e)
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isAdmin) {
                 MessageBox.Show("Jesteś już zalogowany jako administrator.", "Logowanie", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -35,23 +35,26 @@ namespace NetworkMonitor
             }
             var viewModel = DataContext as MainWindowViewModel;
 
-            var loginWindow = new LoginWindow(viewModel.ConnectionString);
+            var loginWindow = new LoginWindow();
             if (loginWindow.ShowDialog() == true && loginWindow.LoggedUser != null)
             {
-                viewModel.CurrentUser = loginWindow.LoggedUser;
+                var loggedUser = loginWindow.LoggedUser;
+                viewModel.CurrentUser = loggedUser;
+
                 MessageBox.Show($"Zalogowano jako: {viewModel.CurrentUser.Username}", "Logowanie", MessageBoxButton.OK, MessageBoxImage.Information);
                 Console.WriteLine($"Zalogowano użytkownika: {viewModel.CurrentUser.Username} ({viewModel.CurrentUser.Role})");
+
                 viewModel.LoadAlerts();
             }
             else
             {
-                Console.WriteLine("Logowanie nie powiodło się.");
+                Console.WriteLine("Okno logowania zostało zamknięte.");
             }
         }
         private void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = DataContext as MainWindowViewModel;
-            viewModel.CurrentUser = new User { Role = "guest", Username = "Niezalogowany" };
+            viewModel.CurrentUser = new User { Role = "User", Username = "Niezalogowany" };
             MessageBox.Show("Wylogowano.", "Wylogowanie", MessageBoxButton.OK, MessageBoxImage.Information);
             Console.WriteLine("Wylogowano. Rola: guest");
             viewModel.LoadAlerts();

@@ -9,13 +9,10 @@ namespace NetworkMonitor
 {
     public partial class LoginWindow : Window
     {
-        private readonly string _connectionString;
-        //private readonly string _connectionString = ((App)Application.Current).DBConnectionString;
         public User LoggedUser { get; private set; }
-        public LoginWindow(string connectionString)
+        public LoginWindow()
         {
             InitializeComponent();
-            _connectionString = connectionString;
         }
 
 
@@ -24,6 +21,11 @@ namespace NetworkMonitor
             string username = UsernameTextBox.Text;
             string password = PasswordBox.Password;
 
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                MessageBox.Show("Nazwa użytkownika i hasło nie mogą być puste.", "Błąd logowania", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             using (var httpClient = new HttpClient())
             {
@@ -35,9 +37,17 @@ namespace NetworkMonitor
 
                     if (response.IsSuccessStatusCode)
                     {
+                        // Pobranie danych użytkownika z odpowiedzi API
                         var user = await response.Content.ReadFromJsonAsync<User>();
-                        LoggedUser = user;
-                        DialogResult = true; // Zamknij okno logowania
+                        if (user != null)
+                        {
+                            LoggedUser = user;
+                            DialogResult = true; // Zamknij okno logowania i przekaż sukces
+                        }
+                        else
+                        {
+                            MessageBox.Show("Nie udało się pobrać danych użytkownika.", "Błąd logowania", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
                     }
                     else if (response.StatusCode == HttpStatusCode.Unauthorized)
                     {
@@ -45,7 +55,7 @@ namespace NetworkMonitor
                     }
                     else
                     {
-                        MessageBox.Show("Wystąpił błąd podczas logowania.", "Błąd logowania", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show($"Wystąpił błąd podczas logowania: {response.StatusCode}.", "Błąd logowania", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
                 catch (Exception ex)
@@ -55,4 +65,5 @@ namespace NetworkMonitor
             }
         }
     }
+    
 }

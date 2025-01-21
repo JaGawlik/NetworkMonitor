@@ -72,14 +72,14 @@ namespace NetworkMonitor
 
         public ObservableCollection<AlertGroupViewModel> AlertGroups { get; set; } = new ObservableCollection<AlertGroupViewModel>();
 
-        public string ConnectionString { get; }
+        //public string ConnectionString { get; }
 
         private string _localIp = ConfigurationManager.GetLocalIpAddress();
 
         private readonly AlertRepository _alertRepository;
         public MainWindowViewModel(User user)
         {
-            CurrentUser = user ?? new User { Role = "guest", Username = "Niezalogowany" };
+            CurrentUser = user ?? new User { Role = "User", Username = "Niezalogowany" };
             _alertRepository = new AlertRepository(ConfigurationManager.GetSetting("ApiAddress"));
 
             UpdateAlertStatusCommand = new RelayCommand<int>(async (alertId) => await UpdateAlertStatus(alertId, "resolved"));
@@ -228,6 +228,34 @@ namespace NetworkMonitor
                 Console.WriteLine($"Błąd podczas aktualizacji alertu: {ex.Message}");
                 MessageBox.Show($"Błąd podczas aktualizacji alertu: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        public async Task<User> LoginUserAsync(string username, string password)
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.BaseAddress = new Uri(ConfigurationManager.GetSetting("ApiAddress"));
+                var credentials = new { Username = username, Password = password };
+
+                var response = await client.PostAsJsonAsync("/api/auth/login", credentials);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var user = await response.Content.ReadFromJsonAsync<User>();
+                    return user;
+                }
+                else
+                {
+                    Console.WriteLine($"Błąd logowania: {response.StatusCode} - {response.ReasonPhrase}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas logowania: {ex.Message}");
+            }
+
+            return null;
         }
 
 
