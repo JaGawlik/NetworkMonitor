@@ -7,7 +7,8 @@ namespace AlertApiServer
             var builder = WebApplication.CreateBuilder(args);
 
             // Dodanie konfiguracji do dependency injection
-            builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+            //builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
+            //builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 
             // Rejestracja kontrolerów
             builder.Services.AddControllers();
@@ -27,8 +28,13 @@ namespace AlertApiServer
             });
 
             // Pobranie connection string dla logowania (opcjonalne do diagnostyki)
-            string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-            Console.WriteLine($"Connection String: {connectionString}");
+            //string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+            if (builder.Environment.IsDevelopment())
+            {
+                string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+                Console.WriteLine($"Connection String: {connectionString}");
+            }
 
             var app = builder.Build();
 

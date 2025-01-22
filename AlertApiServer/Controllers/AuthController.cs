@@ -9,13 +9,19 @@ namespace ApiServer.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
+        private readonly string _connectionString;
+
+        public AuthController(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
+        }
+
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest loginRequest)
         {
             try
             {
-                string connectionString = NetworkMonitor.Configuration.ConfigurationManager.GetSetting("ConnectionString");
-                var user = UserRepository.Authenticate(connectionString, loginRequest.Username, loginRequest.Password);
+                var user = UserRepository.Authenticate(_connectionString, loginRequest.Username, loginRequest.Password);
 
                 if (user == null)
                 {

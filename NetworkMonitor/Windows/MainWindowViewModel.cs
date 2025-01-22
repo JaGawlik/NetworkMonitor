@@ -5,13 +5,16 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Diagnostics;
 using NetworkMonitor.Configuration;
 using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
+using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
 using NetworkMonitor.Windows.Views;
 
@@ -77,6 +80,9 @@ namespace NetworkMonitor
         private string _localIp = ConfigurationManager.GetLocalIpAddress();
 
         private readonly AlertRepository _alertRepository;
+
+        private readonly SnortManagerService _snortManagerService;
+        private Process _snortProcess;
         public MainWindowViewModel(User user)
         {
             CurrentUser = user ?? new User { Role = "User", Username = "Niezalogowany" };
@@ -231,7 +237,7 @@ namespace NetworkMonitor
         }
 
         public async Task<User> LoginUserAsync(string username, string password)
-        {
+        { 
             try
             {
                 using var client = new HttpClient();
