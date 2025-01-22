@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using NetworkMonitor.Snort;
-using NetworkMonitor.Configuration;
+using NetworkMonitor.AppConfiguration;
 
 namespace NetworkMonitor.Snort
 {
@@ -16,7 +16,7 @@ namespace NetworkMonitor.Snort
             string snortLogPath = Path.Combine(snortInstallationPath, "log", "alert.ids");
             string snortPath = Path.Combine(snortInstallationPath, "bin", "snort.exe");
             string arguments = $"-i 6 -c {Path.Combine(snortInstallationPath, "etc", "snort.conf")} -l {Path.Combine(snortInstallationPath, "log")} -A fast -N";
-            string apiUrl = "http://localhost:5136";
+            string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
 
             if (string.IsNullOrEmpty(snortInstallationPath))
             {
@@ -39,7 +39,7 @@ namespace NetworkMonitor.Snort
             }
 
             // Monitor Snort logs
-            var monitor = new SnortAlertMonitor(snortLogPath, apiUrl);
+            var monitor = new SnortAlertMonitor(snortLogPath, apiUrl, Application.Current.Dispatcher);
             Task.Run(() => monitor.StartMonitoringAsync());
 
             return snortProcess;

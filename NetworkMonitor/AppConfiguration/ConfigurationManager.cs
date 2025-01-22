@@ -1,10 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Runtime;
 using System.Text.Json;
 
-namespace NetworkMonitor.Configuration
+namespace NetworkMonitor.AppConfiguration
 {
     public static class ConfigurationManager
     {
@@ -28,6 +29,19 @@ namespace NetworkMonitor.Configuration
             {
                 Settings = new ConfigurationSettings();
                 SaveSettings();
+            }
+
+            if(string.IsNullOrWhiteSpace(Settings.ApiUrl))
+            {
+                try
+                {
+                    Settings.ApiUrl = DiscoverApiAddress();
+                    SaveSettings();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Błąd podczas wykrywania API: {ex.Message}");
+                }
             }
         }
 
@@ -88,7 +102,42 @@ namespace NetworkMonitor.Configuration
 
             throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
         }
+
+        public static string DiscoverApiAddress()
+        {
+            // Lista potencjalnych adresów do sprawdzenia
+            //TU MOŻE BYC PROB
+            var potentialAddresses = new[]
+            {
+                "https://localhost:7270",
+                "http://127.0.0.1:7270",
+                $"http://{GetLocalIpAddress()}:7270"
+            };
+
+            foreach (var address in potentialAddresses)
+            {
+                try
+                {
+                    using var client = new HttpClient();
+                    var response = client.GetAsync($"{address}/api/health").Result; 
+                    if (response.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Znaleziono API pod adresem: {address}");
+                        return address;
+                    }
+                }
+                catch
+                {
+                    // Szukanie kolejnego adresu
+                }
+            }
+
+            // Jeśli nie znaleziono działającego API
+            throw new Exception("Nie można znaleźć działającego API.");
+        }
     }
+
+
 
 
 

@@ -1,4 +1,4 @@
-﻿using NetworkMonitor.Configuration;
+﻿using NetworkMonitor.AppConfiguration;
 using NetworkMonitor.Repository;
 using NetworkMonitor.Windows;
 using Npgsql;

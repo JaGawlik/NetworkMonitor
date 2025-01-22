@@ -6,7 +6,7 @@ using NetworkMonitor.Database;
 using NetworkMonitor.Repository;
 using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
-using NetworkMonitor.Configuration;
+using NetworkMonitor.AppConfiguration;
 using NetworkMonitor.Model;
 using NetworkMonitor.Snort;
 using System.Net;

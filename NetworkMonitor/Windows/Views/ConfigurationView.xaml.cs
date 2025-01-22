@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Win32;
-using NetworkMonitor.Configuration;
+using NetworkMonitor.AppConfiguration;
 
 namespace NetworkMonitor.Windows.Views
 {
@@ -93,5 +93,39 @@ namespace NetworkMonitor.Windows.Views
                 viewModel.Password = passwordBox.Password;
             }
         }
+        private void FindApiButton_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as ConfigurationViewModel;
+            if (viewModel != null)
+            {
+                ConfigurationManager.Settings.ApiUrl = ConfigurationManager.DiscoverApiAddress();
+                viewModel.ApiAddress = ConfigurationManager.Settings.ApiUrl;
+            }
+        }
+        private void SaveAndStartSnort_Click(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as ConfigurationViewModel;
+            if (viewModel != null)
+            {
+                try
+                {
+                    // Zapisanie konfiguracji
+                    viewModel.SaveSettings();
+
+                    // Wywołanie inicjalizacji Snort w MainWindowViewModel
+                    var mainWindowViewModel = Application.Current.MainWindow.DataContext as MainWindowViewModel;
+                    mainWindowViewModel?.InitializeSnortAndMonitoring();
+
+                    MessageBox.Show("Konfiguracja zapisana i Snort został uruchomiony.", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    mainWindowViewModel.SelectedTabIndex = 0;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Błąd podczas uruchamiania Snort: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
     }
 }

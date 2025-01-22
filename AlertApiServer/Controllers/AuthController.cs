@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NetworkMonitor.Repository;
-using NetworkMonitor.Configuration;
+using NetworkMonitor.AppConfiguration;
 
 namespace ApiServer.Controllers
 {

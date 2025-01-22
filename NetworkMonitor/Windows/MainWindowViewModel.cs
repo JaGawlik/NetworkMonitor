@@ -11,7 +11,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using System.Diagnostics;
-using NetworkMonitor.Configuration;
+using NetworkMonitor.AppConfiguration;
 using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
 using NetworkMonitor.Snort;
@@ -23,9 +23,14 @@ namespace NetworkMonitor
     public class MainWindowViewModel : INotifyPropertyChanged
     {
         private int _lastMaxId = 0;
-        private DispatcherTimer _timer;
-
+        private DispatcherTimer _timer;        
         public ICommand UpdateAlertStatusCommand { get; }
+
+        private Process _snortProcess;
+        private SnortManagerService _snortManagerService;
+        private SnortAlertMonitor _snortAlertMonitor;
+
+        private bool _isSnortInitialized = false;
 
         private User _currentUser;
         public User CurrentUser
@@ -75,21 +80,28 @@ namespace NetworkMonitor
 
         public ObservableCollection<AlertGroupViewModel> AlertGroups { get; set; } = new ObservableCollection<AlertGroupViewModel>();
 
-        //public string ConnectionString { get; }
-
         private string _localIp = ConfigurationManager.GetLocalIpAddress();
 
         private readonly AlertRepository _alertRepository;
-
-        private readonly SnortManagerService _snortManagerService;
-        private Process _snortProcess;
         public MainWindowViewModel(User user)
         {
             CurrentUser = user ?? new User { Role = "User", Username = "Niezalogowany" };
-            _alertRepository = new AlertRepository(ConfigurationManager.GetSetting("ApiAddress"));
 
+            // Sprawdzanie, czy konfiguracja jest kompletna
+            if (!IsConfigurationValid())
+            {
+                MessageBox.Show("Brak wymaganej konfiguracji. Przejdź do zakładki konfiguracji, aby uzupełnić dane.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                // Przejdź do zakładki konfiguracji
+                SelectedTabIndex = 1;
+                return;
+            }
+
+            // Inicjalizacja Snort i powiązanych komponentów
+            InitializeSnortAndMonitoring();
+
+            // Inicjalizacja innych składników
             UpdateAlertStatusCommand = new RelayCommand<int>(async (alertId) => await UpdateAlertStatus(alertId, "resolved"));
-
             SelectedTabIndex = 0;
 
             LoadAlerts();
@@ -101,6 +113,33 @@ namespace NetworkMonitor
             _timer.Tick += CheckForNewAlerts;
             _timer.Start();
         }
+        public void InitializeSnortAndMonitoring()
+        {
+            if (_isSnortInitialized)
+            {
+                return;
+            }
+            try
+            {
+                string snortLogPath = ConfigurationManager.GetSetting("SnortInstallationPath") + @"\log\alert.ids";
+                string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
+
+                _snortManagerService = new SnortManagerService();
+                _snortAlertMonitor = new SnortAlertMonitor(snortLogPath, apiUrl, Application.Current.Dispatcher);
+                _snortAlertMonitor.AlertReceived += OnAlertReceived;
+
+                StartSnortAndMonitorLogs();
+                _isSnortInitialized = true;
+
+                MessageBox.Show("Snort został poprawnie uruchomiony.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Błąd podczas uruchamiania Snort: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+
 
         public async void LoadAlerts()
         {
@@ -136,7 +175,7 @@ namespace NetworkMonitor
 
             AlertGroupViewModels = new ObservableCollection<AlertGroupViewModel>(groupedAlerts);
 
-           // RestoreExpandedStates();
+           //RestoreExpandedStates();
         }
 
 
@@ -211,11 +250,10 @@ namespace NetworkMonitor
                 };
             }
             else if (SelectedTabIndex == 1) 
-            {
-                var configViewModel = new ConfigurationViewModel();
+            {                
                 CurrentView = new ConfigurationView
                 {
-                    DataContext = configViewModel
+                    DataContext = new ConfigurationViewModel()
                 };
             }
         }
@@ -264,6 +302,74 @@ namespace NetworkMonitor
             return null;
         }
 
+        private void StartSnortAndMonitorLogs()
+        {
+            try
+            {
+                _snortProcess = _snortManagerService.StartSnort();
+
+                if (_snortProcess == null)
+                {
+                    MessageBox.Show("Nie udało się uruchomić Snorta. Sprawdź konfigurację.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                Task.Run(() => _snortAlertMonitor.StartMonitoringAsync());
+
+                Console.WriteLine("Snort i monitorowanie logów zostały uruchomione.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas uruchamiania Snorta: {ex.Message}");
+            }
+        }
+
+        public void StopSnort()
+        {
+            if (_snortProcess != null && !_snortProcess.HasExited)
+            {
+                try
+                {
+                    _snortProcess.Kill();
+                    _snortProcess.WaitForExit();
+                    Console.WriteLine("Snort został zatrzymany.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Błąd podczas zatrzymywania Snorta: {ex.Message}");
+                }
+            }
+        }
+
+        private void OnAlertReceived(Alert alert)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
+                if (existingGroup != null)
+                {
+                    existingGroup.Alerts.Add(alert);
+                }
+                else
+                {
+                    AlertGroupViewModels.Add(new AlertGroupViewModel
+                    {
+                        DestinationIp = alert.DestinationIp,
+                        Alerts = new ObservableCollection<Alert> { alert },
+                        IsExpanded = false
+                    });
+                }
+            });
+        }
+
+        private bool IsConfigurationValid()
+        {
+            string snortPath = ConfigurationManager.GetSetting("SnortInstallationPath");
+            string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
+            string snortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
+
+            return !string.IsNullOrEmpty(snortPath) && !string.IsNullOrEmpty(apiUrl) && !string.IsNullOrEmpty(snortInstallationPath);
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

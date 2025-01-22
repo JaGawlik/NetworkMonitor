@@ -4,7 +4,7 @@ using System.Windows.Input;
 using System;
 using System.Web;
 
-namespace NetworkMonitor.Configuration
+namespace NetworkMonitor.AppConfiguration
 {
     public class ConfigurationViewModel : INotifyPropertyChanged
     {
