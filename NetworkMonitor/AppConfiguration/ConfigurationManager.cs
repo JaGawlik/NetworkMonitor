@@ -30,19 +30,6 @@ namespace NetworkMonitor.AppConfiguration
                 Settings = new ConfigurationSettings();
                 SaveSettings();
             }
-
-            if(string.IsNullOrWhiteSpace(Settings.ApiUrl))
-            {
-                try
-                {
-                    Settings.ApiUrl = DiscoverApiAddress();
-                    SaveSettings();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Błąd podczas wykrywania API: {ex.Message}");
-                }
-            }
         }
 
         public static void SaveSettings()
@@ -103,10 +90,8 @@ namespace NetworkMonitor.AppConfiguration
             throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
         }
 
-        public static string DiscoverApiAddress()
+        public static async Task<string> DiscoverApiAddressAsync()
         {
-            // Lista potencjalnych adresów do sprawdzenia
-            //TU MOŻE BYC PROB
             var potentialAddresses = new[]
             {
                 "https://localhost:7270",
@@ -118,23 +103,27 @@ namespace NetworkMonitor.AppConfiguration
             {
                 try
                 {
-                    using var client = new HttpClient();
-                    var response = client.GetAsync($"{address}/api/health").Result; 
+                    using var handler = new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+                    };
+                    using var client = new HttpClient(handler);
+                    var response = await client.GetAsync($"{address}/api/alerts");
                     if (response.IsSuccessStatusCode)
                     {
                         Console.WriteLine($"Znaleziono API pod adresem: {address}");
                         return address;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Szukanie kolejnego adresu
+                    Console.WriteLine($"Błąd podczas sprawdzania adresu {address}: {ex.Message}");
                 }
             }
 
-            // Jeśli nie znaleziono działającego API
             throw new Exception("Nie można znaleźć działającego API.");
         }
+
     }
 
 

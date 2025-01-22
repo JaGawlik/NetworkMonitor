@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -93,13 +94,22 @@ namespace NetworkMonitor.Windows.Views
                 viewModel.Password = passwordBox.Password;
             }
         }
-        private void FindApiButton_Click(object sender, RoutedEventArgs e)
+        private async void FindApiButton_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = DataContext as ConfigurationViewModel;
             if (viewModel != null)
             {
-                ConfigurationManager.Settings.ApiUrl = ConfigurationManager.DiscoverApiAddress();
-                viewModel.ApiAddress = ConfigurationManager.Settings.ApiUrl;
+                try
+                {
+                    string apiUrl = await ConfigurationManager.DiscoverApiAddressAsync();
+                    ConfigurationManager.Settings.ApiUrl = apiUrl;
+                    viewModel.ApiAddress = apiUrl;
+                    MessageBox.Show($"Znaleziono API pod adresem: {apiUrl}", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Nie udało się znaleźć API: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         private void SaveAndStartSnort_Click(object sender, RoutedEventArgs e)
@@ -109,6 +119,25 @@ namespace NetworkMonitor.Windows.Views
             {
                 try
                 {
+                    // Sprawdzenie poprawności ustawień
+                    if (string.IsNullOrEmpty(viewModel.SnortInstallationPath) || !Directory.Exists(viewModel.SnortInstallationPath))
+                    {
+                        MessageBox.Show("Ścieżka instalacji Snort jest nieprawidłowa lub nie istnieje.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    if (string.IsNullOrEmpty(viewModel.LogFilePath) || !File.Exists(viewModel.LogFilePath))
+                    {
+                        MessageBox.Show("Ścieżka do pliku logów Snort jest nieprawidłowa lub plik nie istnieje.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    if (string.IsNullOrEmpty(viewModel.ApiAddress))
+                    {
+                        MessageBox.Show("Adres API nie może być pusty.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
                     // Zapisanie konfiguracji
                     viewModel.SaveSettings();
 
@@ -125,7 +154,12 @@ namespace NetworkMonitor.Windows.Views
                     MessageBox.Show($"Błąd podczas uruchamiania Snort: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
+            else
+            {
+                MessageBox.Show("Błąd: brak powiązanego modelu widoku konfiguracji.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
+
 
     }
 }

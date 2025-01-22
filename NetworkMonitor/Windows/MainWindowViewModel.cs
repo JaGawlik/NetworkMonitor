@@ -97,6 +97,9 @@ namespace NetworkMonitor
                 return;
             }
 
+            string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
+            _alertRepository = new AlertRepository(apiUrl);
+
             // Inicjalizacja Snort i powiązanych komponentów
             InitializeSnortAndMonitoring();
 
@@ -183,7 +186,6 @@ namespace NetworkMonitor
         {
             try
             {
-                // Pobierz nowe alerty z API
                 var newAlerts = await _alertRepository.GetAlertsAsync();
 
                 // Filtrowanie alertów w zależności od roli użytkownika
