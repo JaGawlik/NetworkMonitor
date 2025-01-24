@@ -23,8 +23,10 @@ namespace NetworkMonitor
     public class MainWindowViewModel : INotifyPropertyChanged
     {
         private int _lastMaxId = 0;
-        private DispatcherTimer _timer;        
+        private DispatcherTimer _timer;
         public ICommand UpdateAlertStatusCommand { get; }
+        public RelayCommand<object> SearchAlertsByIpCommand { get; }
+
 
         private Process _snortProcess;
         private SnortManagerService _snortManagerService;
@@ -42,6 +44,8 @@ namespace NetworkMonitor
                 OnPropertyChanged(nameof(CurrentUser));
             }
         }
+
+
 
         private object _currentView;
         public object CurrentView
@@ -77,6 +81,28 @@ namespace NetworkMonitor
             }
         }
 
+        private string _searchSourceIp;
+        public string SearchSourceIp
+        {
+            get => _searchSourceIp;
+            set
+            {
+                if (_searchSourceIp != value) 
+                {
+                    _searchSourceIp = value;
+                    OnPropertyChanged(nameof(SearchSourceIp));
+
+                    if (string.IsNullOrWhiteSpace(_searchSourceIp))
+                    {
+                        ResetSearch();
+                    }
+                }
+            }
+        }
+
+
+
+
         private ObservableCollection<AlertGroupViewModel> _alertGroupViewModels = new ObservableCollection<AlertGroupViewModel>();
 
         public ObservableCollection<AlertGroupViewModel> AlertGroupViewModels
@@ -92,11 +118,14 @@ namespace NetworkMonitor
         public ObservableCollection<AlertGroupViewModel> AlertGroups { get; set; } = new ObservableCollection<AlertGroupViewModel>();
 
         private string _localIp = ConfigurationManager.GetLocalIpAddress();
-
+        private bool _isSearching = false;
         private readonly AlertRepository _alertRepository;
         public MainWindowViewModel(User user)
         {
             CurrentUser = new User { Role = "Guest", Username = "Niezalogowany" };
+
+            SearchAlertsByIpCommand = new RelayCommand<object>(_ => SearchAlertsByIp());
+
 
             if (!IsConfigurationValid())
             {
@@ -172,17 +201,50 @@ namespace NetworkMonitor
 
         private void GroupAndDisplayAlerts(List<Alert> alerts)
         {
+            //Grupowanie po destination IP
             var groupedAlerts = alerts
                 .GroupBy(a => a.DestinationIp)
-                .Select(group => new AlertGroupViewModel
+                .Select(group => new
                 {
                     DestinationIp = group.Key,
-                    Alerts = new ObservableCollection<Alert>(group.ToList()), 
-                    IsExpanded = false 
+                    Alerts = group.ToList()
                 });
 
-            AlertGroupViewModels = new ObservableCollection<AlertGroupViewModel>(groupedAlerts);
+            foreach (var group in groupedAlerts)
+            {
+                var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == group.DestinationIp);
+
+                if (existingGroup != null)
+                {
+                    foreach (var alert in group.Alerts)
+                    {
+                        if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
+                        {
+                            existingGroup.Alerts.Add(alert);
+                        }
+                    }
+                }
+                else
+                {
+                    AlertGroupViewModels.Add(new AlertGroupViewModel
+                    {
+                        DestinationIp = group.DestinationIp,
+                        Alerts = new ObservableCollection<Alert>(group.Alerts),
+                        IsExpanded = false // Domyślnie zamknięta grupa
+                    });
+                }
+            }
+
+            for (int i = AlertGroupViewModels.Count - 1; i >= 0; i--)
+            {
+                var group = AlertGroupViewModels[i];
+                if (!groupedAlerts.Any(g => g.DestinationIp == group.DestinationIp))
+                {
+                    AlertGroupViewModels.RemoveAt(i);
+                }
+            }
         }
+
         private void SortGroupsByLatestAlert()
         {
             var sortedGroups = AlertGroupViewModels
@@ -214,6 +276,9 @@ namespace NetworkMonitor
                 };
             }
         }
+
+
+
 
         public async Task UpdateAlertStatus(int alertId, string newStatus)
         {
@@ -341,6 +406,11 @@ namespace NetworkMonitor
 
         private async void CheckForNewAlerts(object sender, EventArgs e)
         {
+            if (_isSearching) // Jeśli tryb wyszukiwania jest aktywny, nie aktualizuj alertów
+            {
+                return;
+            }
+
             try
             {
                 var allAlerts = CurrentUser.Role switch
@@ -350,36 +420,7 @@ namespace NetworkMonitor
                     _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
                 };
 
-                var newAlerts = allAlerts.Where(a => a.Id > _lastMaxId).ToList();
-
-                if (newAlerts.Any())
-                {
-                    _lastMaxId = newAlerts.Max(a => a.Id);
-
-                    foreach (var alert in newAlerts)
-                    {
-                        var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
-
-                        if (existingGroup != null)
-                        {
-                            if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
-                            {
-                                existingGroup.Alerts.Add(alert);
-                            }
-                        }
-                        else
-                        {
-                            AlertGroupViewModels.Add(new AlertGroupViewModel
-                            {
-                                DestinationIp = alert.DestinationIp,
-                                Alerts = new ObservableCollection<Alert> { alert },
-                                IsExpanded = false
-                            });
-                        }
-                    }
-
-                    SortGroupsByLatestAlert();
-                }
+                GroupAndDisplayAlerts(allAlerts);
             }
             catch (Exception ex)
             {
@@ -387,7 +428,33 @@ namespace NetworkMonitor
             }
         }
 
+        private async void SearchAlertsByIp()
+        {
+            if (string.IsNullOrWhiteSpace(SearchSourceIp))
+            {
+                MessageBox.Show("Wprowadź poprawny adres IP", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
+            try
+            {
+                _isSearching = true;
+
+                var alerts = await _alertRepository.GetAlertsAsync(); 
+                var filteredAlerts = alerts.Where(a => a.SourceIp == SearchSourceIp).ToList();
+                GroupAndDisplayAlerts(filteredAlerts);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas wyszukiwania alertów: {ex.Message}");
+            }           
+        }
+
+        private void ResetSearch()
+        {
+            _isSearching = false; 
+            LoadAlerts(); 
+        }
 
         private bool IsConfigurationValid()
         {

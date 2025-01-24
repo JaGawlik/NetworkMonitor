@@ -7,7 +7,24 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <DataGrid ItemsSource="{Binding AlertGroupViewModels}" AutoGenerateColumns="False" IsReadOnly="True" Margin="10">
+        <!-- Główne układy - wiersze dla wyszukiwania i tabeli -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <!-- Wiersz dla wyszukiwania -->
+            <RowDefinition Height="*" />
+            <!-- Wiersz dla tabeli -->
+        </Grid.RowDefinitions>
+
+        <!-- Sekcja wyszukiwania -->
+        <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0" HorizontalAlignment="Left">
+            <TextBlock Text="Wyszukaj IP źródłowe:" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <TextBox Width="200" HorizontalAlignment="Left" VerticalAlignment="Center" 
+                     Text="{Binding SearchSourceIp, UpdateSourceTrigger=PropertyChanged}" />
+            <Button Content="Szukaj" Margin="10,0,0,0" Command="{Binding SearchAlertsByIpCommand}" />
+        </StackPanel>
+
+        <!-- Tabela z alertami -->
+        <DataGrid ItemsSource="{Binding AlertGroupViewModels}" AutoGenerateColumns="False" IsReadOnly="True" Margin="10" Grid.Row="1">
             <!-- Kolumny główne -->
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Destination IP" Binding="{Binding DestinationIp}" Width="*" />

@@ -49,5 +49,10 @@ namespace NetworkMonitor.Repository
                 throw new Exception($"Błąd podczas aktualizacji statusu alertu: {response.StatusCode}");
             }
         }
+
+        public async Task<List<Alert>> GetAlertsBySourceIp(string sourceIp)
+        {
+            return await GetAlertsAsync();
+        }
     }
 }

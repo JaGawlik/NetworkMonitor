@@ -20,7 +20,8 @@
             <Button Content="Wyloguj się" Click="LogoutButton_Click"/>
         </StackPanel>
         
-        
+
+
         <!-- Contenet Panel-->
         <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}">
             <!-- Tab for Alerts -->

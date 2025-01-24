@@ -8,15 +8,12 @@ using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
 using NetworkMonitor.AppConfiguration;
 using NetworkMonitor.Model;
-using NetworkMonitor.Snort;
 using System.Net;
 
 namespace NetworkMonitor
 {
     public partial class App : Application
     {
-        public string DBConnectionString { get; private set; }
-
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
