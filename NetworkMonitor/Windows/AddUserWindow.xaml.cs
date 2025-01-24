@@ -30,9 +30,9 @@ namespace NetworkMonitor
             var adminUser = new User
             {
                 Username = username,
-                Password = password, // W produkcji: hashuj hasła
-                Role = "admin",
-                AssignedIp = null // Admin nie ma przypisanego IP
+                Password = password, 
+                Role = "Administrator",
+                AssignedIp = null 
             };
 
             UserRepository.AddUser(_connectionString, adminUser);

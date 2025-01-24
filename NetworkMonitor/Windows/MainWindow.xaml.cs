@@ -29,21 +29,30 @@ namespace NetworkMonitor
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isAdmin) {
+            if (_isAdmin)
+            {
                 MessageBox.Show("Jesteś już zalogowany jako administrator.", "Logowanie", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
+
             var viewModel = DataContext as MainWindowViewModel;
 
+            // Otwarcie okna logowania
             var loginWindow = new LoginWindow();
             if (loginWindow.ShowDialog() == true && loginWindow.LoggedUser != null)
             {
+                // Pobranie zalogowanego użytkownika
                 var loggedUser = loginWindow.LoggedUser;
                 viewModel.CurrentUser = loggedUser;
 
-                MessageBox.Show($"Zalogowano jako: {viewModel.CurrentUser.Username}", "Logowanie", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Wyświetlenie komunikatu
+                MessageBox.Show($"Zalogowano jako: {viewModel.CurrentUser.Username}",
+                    "Logowanie", MessageBoxButton.OK, MessageBoxImage.Information);
+
                 Console.WriteLine($"Zalogowano użytkownika: {viewModel.CurrentUser.Username} ({viewModel.CurrentUser.Role})");
 
+                // Załaduj alerty zgodnie z nową rolą użytkownika
+                viewModel.AlertGroupViewModels.Clear();
                 viewModel.LoadAlerts();
             }
             else
@@ -51,22 +60,26 @@ namespace NetworkMonitor
                 Console.WriteLine("Okno logowania zostało zamknięte.");
             }
         }
+    
+
         private void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = DataContext as MainWindowViewModel;
-            viewModel.CurrentUser = new User { Role = "User", Username = "Niezalogowany" };
-            MessageBox.Show("Wylogowano.", "Wylogowanie", MessageBoxButton.OK, MessageBoxImage.Information);
-            Console.WriteLine("Wylogowano. Rola: guest");
+
+            // Ustawienie użytkownika jako niezalogowanego
+            viewModel.CurrentUser = new User { Role = "Guest", Username = "Niezalogowany" };
+
+            // Wyświetlenie komunikatu
+            MessageBox.Show("Wylogowano. Widoczne będą tylko alerty związane z lokalnym adresem IP.",
+                "Wylogowanie", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            Console.WriteLine("Wylogowano. Rola: Guest");
+
+            // Wyczyść alerty i załaduj tylko te przypisane do lokalnego IP
+            viewModel.AlertGroupViewModels.Clear();
             viewModel.LoadAlerts();
         }
 
-        private void ConfigureUIForRole()
-        {
-            if (!_isAdmin)
-            {
-                // Ukryj przyciski administracyjne dla klienta
-                //AdminPanel.Visibility = Visibility.Collapsed;
-            }
-        }
+
     }
 }

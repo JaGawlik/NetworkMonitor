@@ -35,7 +35,7 @@ namespace NetworkMonitor
         private User _currentUser;
         public User CurrentUser
         {
-            get => _currentUser ??= new User { Role = "guest", Username = "Niezalogowany" };
+            get => _currentUser ??= new User { Role = "User", Username = "Niezalogowany" };
             set
             {
                 _currentUser = value;
@@ -66,7 +66,18 @@ namespace NetworkMonitor
             }
         }
 
-        private ObservableCollection<AlertGroupViewModel> _alertGroupViewModels;
+        private bool _isAdminLoggedIn = false;
+        public bool IsAdminLoggedIn
+        {
+            get => _isAdminLoggedIn;
+            set
+            {
+                _isAdminLoggedIn = value;
+                OnPropertyChanged(nameof(IsAdminLoggedIn));
+            }
+        }
+
+        private ObservableCollection<AlertGroupViewModel> _alertGroupViewModels = new ObservableCollection<AlertGroupViewModel>();
 
         public ObservableCollection<AlertGroupViewModel> AlertGroupViewModels
         {
@@ -85,14 +96,12 @@ namespace NetworkMonitor
         private readonly AlertRepository _alertRepository;
         public MainWindowViewModel(User user)
         {
-            CurrentUser = user ?? new User { Role = "User", Username = "Niezalogowany" };
+            CurrentUser = new User { Role = "Guest", Username = "Niezalogowany" };
 
-            // Sprawdzanie, czy konfiguracja jest kompletna
             if (!IsConfigurationValid())
             {
                 MessageBox.Show("Brak wymaganej konfiguracji. Przejdź do zakładki konfiguracji, aby uzupełnić dane.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                // Przejdź do zakładki konfiguracji
                 SelectedTabIndex = 1;
                 return;
             }
@@ -100,10 +109,8 @@ namespace NetworkMonitor
             string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
             _alertRepository = new AlertRepository(apiUrl);
 
-            // Inicjalizacja Snort i powiązanych komponentów
             InitializeSnortAndMonitoring();
 
-            // Inicjalizacja innych składników
             UpdateAlertStatusCommand = new RelayCommand<int>(async (alertId) => await UpdateAlertStatus(alertId, "resolved"));
             SelectedTabIndex = 0;
 
@@ -134,7 +141,6 @@ namespace NetworkMonitor
                 StartSnortAndMonitorLogs();
                 _isSnortInitialized = true;
 
-                MessageBox.Show("Snort został poprawnie uruchomiony.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
@@ -150,9 +156,9 @@ namespace NetworkMonitor
             {
                 List<Alert> alerts = CurrentUser.Role switch
                 {
-                    "guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
-                    "user" when !string.IsNullOrEmpty(CurrentUser.AssignedIp) => await _alertRepository.GetAlertsAsync(assignedIp: CurrentUser.AssignedIp),
-                    _ => await _alertRepository.GetAlertsAsync()
+                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp), // Alerty związane z lokalnym IP
+                    "Administrator" => await _alertRepository.GetAlertsAsync(),     // Wszystkie alerty dla administratora
+                    _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
                 };
 
                 GroupAndDisplayAlerts(alerts);
@@ -163,10 +169,9 @@ namespace NetworkMonitor
             }
         }
 
+
         private void GroupAndDisplayAlerts(List<Alert> alerts)
         {
-            //SaveExpandedStates();
-
             var groupedAlerts = alerts
                 .GroupBy(a => a.DestinationIp)
                 .Select(group => new AlertGroupViewModel
@@ -177,8 +182,6 @@ namespace NetworkMonitor
                 });
 
             AlertGroupViewModels = new ObservableCollection<AlertGroupViewModel>(groupedAlerts);
-
-           //RestoreExpandedStates();
         }
 
 
@@ -186,13 +189,14 @@ namespace NetworkMonitor
         {
             try
             {
-                var newAlerts = await _alertRepository.GetAlertsAsync();
-
-                // Filtrowanie alertów w zależności od roli użytkownika
-                if (CurrentUser.Role == "guest")
+                var allAlerts = CurrentUser.Role switch
                 {
-                    newAlerts = newAlerts.Where(a => a.DestinationIp == _localIp).ToList();
-                }
+                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
+                    "Administrator" => await _alertRepository.GetAlertsAsync(),
+                    _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
+                };
+
+                var newAlerts = allAlerts.Where(a => a.Id > _lastMaxId).ToList();
 
                 if (newAlerts.Any())
                 {
@@ -200,10 +204,12 @@ namespace NetworkMonitor
 
                     foreach (var alert in newAlerts)
                     {
+                        // Znajdź istniejącą grupę alertów dla danego IP
                         var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
 
                         if (existingGroup != null)
                         {
+                            // Dodaj alert tylko jeśli nie istnieje w grupie
                             if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
                             {
                                 existingGroup.Alerts.Add(alert);
@@ -211,6 +217,7 @@ namespace NetworkMonitor
                         }
                         else
                         {
+                            // Jeśli grupa dla tego IP jeszcze nie istnieje, utwórz nową
                             AlertGroupViewModels.Add(new AlertGroupViewModel
                             {
                                 DestinationIp = alert.DestinationIp,
@@ -220,6 +227,7 @@ namespace NetworkMonitor
                         }
                     }
 
+                    // Posortuj grupy według najnowszych alertów
                     SortGroupsByLatestAlert();
                 }
             }
@@ -229,18 +237,20 @@ namespace NetworkMonitor
             }
         }
 
+
         private void SortGroupsByLatestAlert()
         {
-            var sortedGroups = AlertGroups
+            var sortedGroups = AlertGroupViewModels
                 .OrderByDescending(g => g.Alerts.Max(a => a.Timestamp))
                 .ToList();
 
-            AlertGroups.Clear();
+            AlertGroupViewModels.Clear();
             foreach (var group in sortedGroups)
             {
-                AlertGroups.Add(group);
+                AlertGroupViewModels.Add(group);
             }
         }
+
 
         private void UpdateCurrentView()
         {
@@ -277,7 +287,7 @@ namespace NetworkMonitor
         }
 
         public async Task<User> LoginUserAsync(string username, string password)
-        { 
+        {
             try
             {
                 using var client = new HttpClient();
@@ -289,7 +299,17 @@ namespace NetworkMonitor
                 if (response.IsSuccessStatusCode)
                 {
                     var user = await response.Content.ReadFromJsonAsync<User>();
-                    return user;
+                    if (user != null)
+                    {
+                        CurrentUser = user;
+                        IsAdminLoggedIn = user.Role == "Administrator";
+
+                        AlertGroupViewModels.Clear();
+
+                        LoadAlerts();
+
+                        return user;
+                    }
                 }
                 else
                 {
@@ -303,6 +323,8 @@ namespace NetworkMonitor
 
             return null;
         }
+
+
 
         private void StartSnortAndMonitorLogs()
         {
@@ -347,6 +369,11 @@ namespace NetworkMonitor
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
+                if (CurrentUser.Role == "Guest" && alert.DestinationIp != _localIp)
+                {
+                    return; 
+                }
+
                 var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
                 if (existingGroup != null)
                 {

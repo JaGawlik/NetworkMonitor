@@ -141,7 +141,6 @@ namespace NetworkMonitor.Windows.Views
                     // Zapisanie konfiguracji
                     viewModel.SaveSettings();
 
-                    // Wywołanie inicjalizacji Snort w MainWindowViewModel
                     var mainWindowViewModel = Application.Current.MainWindow.DataContext as MainWindowViewModel;
                     mainWindowViewModel?.InitializeSnortAndMonitoring();
 
@@ -159,7 +158,6 @@ namespace NetworkMonitor.Windows.Views
                 MessageBox.Show("Błąd: brak powiązanego modelu widoku konfiguracji.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
 
     }
 }
