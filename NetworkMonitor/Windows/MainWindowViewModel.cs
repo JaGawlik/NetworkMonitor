@@ -156,8 +156,8 @@ namespace NetworkMonitor
             {
                 List<Alert> alerts = CurrentUser.Role switch
                 {
-                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp), // Alerty związane z lokalnym IP
-                    "Administrator" => await _alertRepository.GetAlertsAsync(),     // Wszystkie alerty dla administratora
+                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp), 
+                    "Administrator" => await _alertRepository.GetAlertsAsync(),   
                     _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
                 };
 
@@ -183,61 +183,6 @@ namespace NetworkMonitor
 
             AlertGroupViewModels = new ObservableCollection<AlertGroupViewModel>(groupedAlerts);
         }
-
-
-        private async void CheckForNewAlerts(object sender, EventArgs e)
-        {
-            try
-            {
-                var allAlerts = CurrentUser.Role switch
-                {
-                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
-                    "Administrator" => await _alertRepository.GetAlertsAsync(),
-                    _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
-                };
-
-                var newAlerts = allAlerts.Where(a => a.Id > _lastMaxId).ToList();
-
-                if (newAlerts.Any())
-                {
-                    _lastMaxId = newAlerts.Max(a => a.Id);
-
-                    foreach (var alert in newAlerts)
-                    {
-                        // Znajdź istniejącą grupę alertów dla danego IP
-                        var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
-
-                        if (existingGroup != null)
-                        {
-                            // Dodaj alert tylko jeśli nie istnieje w grupie
-                            if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
-                            {
-                                existingGroup.Alerts.Add(alert);
-                            }
-                        }
-                        else
-                        {
-                            // Jeśli grupa dla tego IP jeszcze nie istnieje, utwórz nową
-                            AlertGroupViewModels.Add(new AlertGroupViewModel
-                            {
-                                DestinationIp = alert.DestinationIp,
-                                Alerts = new ObservableCollection<Alert> { alert },
-                                IsExpanded = false
-                            });
-                        }
-                    }
-
-                    // Posortuj grupy według najnowszych alertów
-                    SortGroupsByLatestAlert();
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Błąd podczas sprawdzania nowych alertów: {ex.Message}");
-            }
-        }
-
-
         private void SortGroupsByLatestAlert()
         {
             var sortedGroups = AlertGroupViewModels
@@ -371,13 +316,16 @@ namespace NetworkMonitor
             {
                 if (CurrentUser.Role == "Guest" && alert.DestinationIp != _localIp)
                 {
-                    return; 
+                    return;
                 }
 
                 var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
                 if (existingGroup != null)
                 {
-                    existingGroup.Alerts.Add(alert);
+                    if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
+                    {
+                        existingGroup.Alerts.Add(alert);
+                    }
                 }
                 else
                 {
@@ -390,6 +338,56 @@ namespace NetworkMonitor
                 }
             });
         }
+
+        private async void CheckForNewAlerts(object sender, EventArgs e)
+        {
+            try
+            {
+                var allAlerts = CurrentUser.Role switch
+                {
+                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
+                    "Administrator" => await _alertRepository.GetAlertsAsync(),
+                    _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
+                };
+
+                var newAlerts = allAlerts.Where(a => a.Id > _lastMaxId).ToList();
+
+                if (newAlerts.Any())
+                {
+                    _lastMaxId = newAlerts.Max(a => a.Id);
+
+                    foreach (var alert in newAlerts)
+                    {
+                        var existingGroup = AlertGroupViewModels.FirstOrDefault(g => g.DestinationIp == alert.DestinationIp);
+
+                        if (existingGroup != null)
+                        {
+                            if (!existingGroup.Alerts.Any(a => a.Id == alert.Id))
+                            {
+                                existingGroup.Alerts.Add(alert);
+                            }
+                        }
+                        else
+                        {
+                            AlertGroupViewModels.Add(new AlertGroupViewModel
+                            {
+                                DestinationIp = alert.DestinationIp,
+                                Alerts = new ObservableCollection<Alert> { alert },
+                                IsExpanded = false
+                            });
+                        }
+                    }
+
+                    SortGroupsByLatestAlert();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas sprawdzania nowych alertów: {ex.Message}");
+            }
+        }
+
+
 
         private bool IsConfigurationValid()
         {
