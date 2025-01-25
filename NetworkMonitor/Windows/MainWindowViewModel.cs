@@ -87,7 +87,7 @@ namespace NetworkMonitor
             get => _searchSourceIp;
             set
             {
-                if (_searchSourceIp != value) 
+                if (_searchSourceIp != value)
                 {
                     _searchSourceIp = value;
                     OnPropertyChanged(nameof(SearchSourceIp));
@@ -181,12 +181,17 @@ namespace NetworkMonitor
 
         public async void LoadAlerts()
         {
+            if (_isSearching)
+            {
+                return;
+            }
+
             try
             {
                 List<Alert> alerts = CurrentUser.Role switch
                 {
-                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp), 
-                    "Administrator" => await _alertRepository.GetAlertsAsync(),   
+                    "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
+                    "Administrator" => await _alertRepository.GetAlertsAsync(),
                     _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
                 };
 
@@ -201,7 +206,6 @@ namespace NetworkMonitor
 
         private void GroupAndDisplayAlerts(List<Alert> alerts)
         {
-            //Grupowanie po destination IP
             var groupedAlerts = alerts
                 .GroupBy(a => a.DestinationIp)
                 .Select(group => new
@@ -230,7 +234,7 @@ namespace NetworkMonitor
                     {
                         DestinationIp = group.DestinationIp,
                         Alerts = new ObservableCollection<Alert>(group.Alerts),
-                        IsExpanded = false // Domyślnie zamknięta grupa
+                        IsExpanded = false
                     });
                 }
             }
@@ -244,6 +248,8 @@ namespace NetworkMonitor
                 }
             }
         }
+
+
 
         private void SortGroupsByLatestAlert()
         {
@@ -261,15 +267,15 @@ namespace NetworkMonitor
 
         private void UpdateCurrentView()
         {
-            if (SelectedTabIndex == 0) 
+            if (SelectedTabIndex == 0)
             {
                 CurrentView = new AlertsView
                 {
                     DataContext = this
                 };
             }
-            else if (SelectedTabIndex == 1) 
-            {                
+            else if (SelectedTabIndex == 1)
+            {
                 CurrentView = new ConfigurationView
                 {
                     DataContext = new ConfigurationViewModel()
@@ -406,7 +412,7 @@ namespace NetworkMonitor
 
         private async void CheckForNewAlerts(object sender, EventArgs e)
         {
-            if (_isSearching) // Jeśli tryb wyszukiwania jest aktywny, nie aktualizuj alertów
+            if (_isSearching)
             {
                 return;
             }
@@ -428,6 +434,7 @@ namespace NetworkMonitor
             }
         }
 
+
         private async void SearchAlertsByIp()
         {
             if (string.IsNullOrWhiteSpace(SearchSourceIp))
@@ -438,22 +445,29 @@ namespace NetworkMonitor
 
             try
             {
-                _isSearching = true;
+                _isSearching = true; // Zablokuj odświeżanie
+                var alerts = await _alertRepository.GetAlertsAsync();
 
-                var alerts = await _alertRepository.GetAlertsAsync(); 
-                var filteredAlerts = alerts.Where(a => a.SourceIp == SearchSourceIp).ToList();
+                var filteredAlerts = alerts.Where(a => a.SourceIp == SearchSourceIp || a.DestinationIp == SearchSourceIp).ToList();
+
                 GroupAndDisplayAlerts(filteredAlerts);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Błąd podczas wyszukiwania alertów: {ex.Message}");
-            }           
+            }
         }
+
+
+
 
         private void ResetSearch()
         {
-            _isSearching = false; 
-            LoadAlerts(); 
+            if (_isSearching)
+            {
+                _isSearching = false;
+                LoadAlerts();
+            }
         }
 
         private bool IsConfigurationValid()

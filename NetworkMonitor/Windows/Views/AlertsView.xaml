@@ -17,7 +17,7 @@
 
         <!-- Sekcja wyszukiwania -->
         <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0" HorizontalAlignment="Left">
-            <TextBlock Text="Wyszukaj IP źródłowe:" VerticalAlignment="Center" Margin="0,0,10,0" />
+            <TextBlock Text="Wyszukaj IP:" VerticalAlignment="Center" Margin="0,0,10,0" />
             <TextBox Width="200" HorizontalAlignment="Left" VerticalAlignment="Center" 
                      Text="{Binding SearchSourceIp, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="Szukaj" Margin="10,0,0,0" Command="{Binding SearchAlertsByIpCommand}" />
