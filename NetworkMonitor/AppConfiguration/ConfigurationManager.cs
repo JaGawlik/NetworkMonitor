@@ -149,7 +149,7 @@ namespace NetworkMonitor.AppConfiguration
                     using var client = new HttpClient(handler);
 
                     Console.WriteLine($"Sprawdzanie adresu: {address}");
-                    var response = await client.GetAsync($"{address}/api/alerts");
+                    var response = await client.GetAsync($"{address}/api/health");
                     if (response.IsSuccessStatusCode)
                     {
                         Console.WriteLine($"Znaleziono działające API pod adresem: {address}");
