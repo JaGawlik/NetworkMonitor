@@ -41,26 +41,51 @@ namespace NetworkMonitor.Utilities
                 MessageBox.Show($"Błąd podczas zapisywania connection string: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-    
 
-    private static string FindAppSettingsFile()
+
+        private static string FindAppSettingsFile()
         {
             string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string targetFile = "appsettings.json";
 
-            while (!string.IsNullOrEmpty(currentDirectory))
-            {
-                string potentialPath = Path.Combine(currentDirectory, "AlertApiServer", targetFile);
-                if (File.Exists(potentialPath))
-                {
-                    return potentialPath;
-                }
+            // Ścieżka, gdzie plik powinien być tworzony
+            string expectedPath = Path.Combine(currentDirectory, targetFile);
 
-                currentDirectory = Directory.GetParent(currentDirectory)?.FullName;
+            // Jeśli plik istnieje, zwróć jego ścieżkę
+            if (File.Exists(expectedPath))
+            {
+                return expectedPath;
             }
 
-            throw new FileNotFoundException("Nie znaleziono pliku appsettings.json.");
+            // Jeśli plik nie istnieje, utwórz domyślny plik appsettings.json
+            try
+            {
+                var defaultSettings = new
+                {
+                    ConnectionStrings = new { DefaultConnection = "" },
+                    Logging = new
+                    {
+                        LogLevel = new
+                        {
+                            Default = "Information",
+                            Microsoft_AspNetCore = "Warning"
+                        }
+                    },
+                    AllowedHosts = "*"
+                };
+
+                string json = JsonConvert.SerializeObject(defaultSettings, Formatting.Indented);
+                File.WriteAllText(expectedPath, json);
+
+                MessageBox.Show("Utworzono nowy plik appsettings.json z domyślnymi ustawieniami.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+                return expectedPath;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Nie udało się utworzyć pliku appsettings.json: {ex.Message}");
+            }
         }
+
 
     }
 }
