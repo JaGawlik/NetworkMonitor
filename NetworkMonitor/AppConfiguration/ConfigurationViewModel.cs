@@ -125,36 +125,7 @@ namespace NetworkMonitor.AppConfiguration
         public ICommand BrowseSnortFolderCommand { get; }
         public ICommand SaveConnectionStringCommand { get; }
         public ConfigurationViewModel()
-        {
-            var connectionString = ConfigurationManager.GetSetting("ConnectionString");
-
-            var parameters = connectionString.Split(';');
-            foreach (var parameter in parameters)
-            {
-                var keyValue = parameter.Split('=');
-                if (keyValue.Length == 2)
-                {
-                    switch (keyValue[0])
-                    {
-                        case "Host":
-                            Host = keyValue[1];
-                            break;
-                        case "Port":
-                            Port = keyValue[1];
-                            break;
-                        case "Database":
-                            Database = keyValue[1];
-                            break;
-                        case "Username":
-                            Username = keyValue[1];
-                            break;
-                        case "Password":
-                            Password = keyValue[1];
-                            break;
-                    }
-                }
-            }
-
+        {           
             LogFilePath = ConfigurationManager.GetSetting("LogFilePath");
             ApiAddress = ConfigurationManager.GetSetting("ApiAddress");
             SnortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");

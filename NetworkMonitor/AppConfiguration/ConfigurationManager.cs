@@ -2,8 +2,8 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Runtime;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace NetworkMonitor.AppConfiguration
 {
@@ -13,31 +13,64 @@ namespace NetworkMonitor.AppConfiguration
 
         public static ConfigurationSettings Settings { get; private set; }
 
-        static ConfigurationManager()
+        /// <summary>
+        /// Inicjalizacja konfiguracji aplikacji, uwzględniając różne role.
+        /// </summary>
+        public static async Task InitializeAsync(string userRole)
         {
-            LoadSettings();
-        }
+            await LoadSettingsAsync();
 
-        public static void LoadSettings()
-        {
-            if (File.Exists(ConfigFilePath))
+            if (userRole == "Administrator")
             {
-                var json = File.ReadAllText(ConfigFilePath);
-                Settings = JsonSerializer.Deserialize<ConfigurationSettings>(json) ?? new ConfigurationSettings();
+                Console.WriteLine("Administrator - API zostanie ustawione po inicjalizacji bazy danych.");
             }
             else
             {
-                Settings = new ConfigurationSettings();
-                SaveSettings();
+                Console.WriteLine("Zwykły użytkownik - próba automatycznego ustawienia API.");
+                await InitializeApiUrlAsync();
             }
         }
 
+        /// <summary>
+        /// Ładowanie ustawień z pliku konfiguracji.
+        /// </summary>
+        public static async Task LoadSettingsAsync()
+        {
+            try
+            {
+                if (File.Exists(ConfigFilePath))
+                {
+                    var json = await File.ReadAllTextAsync(ConfigFilePath);
+                    Settings = JsonSerializer.Deserialize<ConfigurationSettings>(json) ?? new ConfigurationSettings();
+                }
+                else
+                {
+                    // Tworzymy plik konfiguracyjny z domyślnymi ustawieniami
+                    Settings = new ConfigurationSettings();
+                    SaveSettings(); // Zapisujemy domyślne ustawienia w pliku
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas ładowania konfiguracji: {ex.Message}");
+                Settings = new ConfigurationSettings(); 
+                SaveSettings(); 
+            }
+        }
+
+
+        /// <summary>
+        /// Zapisanie ustawień do pliku konfiguracji.
+        /// </summary>
         public static void SaveSettings()
         {
             var json = JsonSerializer.Serialize(Settings, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(ConfigFilePath, json);
         }
 
+        /// <summary>
+        /// Pobranie wartości ustawienia na podstawie klucza.
+        /// </summary>
         public static string GetSetting(string key)
         {
             return key switch
@@ -45,12 +78,14 @@ namespace NetworkMonitor.AppConfiguration
                 "LogFilePath" => Settings.SnortLogPath,
                 "ApiAddress" => Settings.ApiUrl,
                 "SnortInstallationPath" => Settings.SnortInstallationPath,
-                "ConnectionString" => Settings.DatabaseSettings.ConnectionString,
                 "Role" => Settings.Role,
-                _ => throw new ArgumentException($"Nieznany klucz ustawienia: {key}")
+                _ => throw new KeyNotFoundException($"Klucz ustawienia '{key}' nie istnieje w konfiguracji.")
             };
         }
 
+        /// <summary>
+        /// Ustawienie wartości konfiguracji.
+        /// </summary>
         public static void SetSetting(string key, string value)
         {
             switch (key)
@@ -62,18 +97,19 @@ namespace NetworkMonitor.AppConfiguration
                     Settings.ApiUrl = value;
                     break;
                 case "SnortInstallationPath":
-                    Settings.SnortInstallationPath = value; 
+                    Settings.SnortInstallationPath = value;
                     break;
                 case "Role":
                     Settings.Role = value;
-                    break;
-                case "ConnectionString":
-                    Settings.DatabaseSettings.ConnectionString = value;
                     break;
                 default:
                     throw new ArgumentException($"Nieznany klucz ustawienia: {key}");
             }
         }
+
+        /// <summary>
+        /// Pobranie lokalnego adresu IP.
+        /// </summary>
         public static string GetLocalIpAddress()
         {
             string hostName = Dns.GetHostName();
@@ -90,6 +126,9 @@ namespace NetworkMonitor.AppConfiguration
             throw new Exception("Nie znaleziono lokalnego adresu IPv4.");
         }
 
+        /// <summary>
+        /// Odkrywanie adresu API.
+        /// </summary>
         public static async Task<string> DiscoverApiAddressAsync()
         {
             var potentialAddresses = new[]
@@ -108,41 +147,52 @@ namespace NetworkMonitor.AppConfiguration
                         ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
                     };
                     using var client = new HttpClient(handler);
+
+                    Console.WriteLine($"Sprawdzanie adresu: {address}");
                     var response = await client.GetAsync($"{address}/api/alerts");
                     if (response.IsSuccessStatusCode)
                     {
-                        Console.WriteLine($"Znaleziono API pod adresem: {address}");
+                        Console.WriteLine($"Znaleziono działające API pod adresem: {address}");
                         return address;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine($"Błąd podczas sprawdzania adresu {address}: {ex.Message}");
+                    // Ignorujemy błędy i przechodzimy do następnego adresu
                 }
             }
 
-            throw new Exception("Nie można znaleźć działającego API.");
+            throw new Exception("Nie udało się znaleźć działającego API.");
         }
 
+        /// <summary>
+        /// Inicjalizacja adresu API.
+        /// </summary>
+        public static async Task InitializeApiUrlAsync()
+        {
+            if (string.IsNullOrWhiteSpace(Settings.ApiUrl))
+            {
+                try
+                {
+                    Settings.ApiUrl = await DiscoverApiAddressAsync();
+                    SaveSettings(); // Zapisujemy nowo wykryte API
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Nie udało się znaleźć API: {ex.Message}");
+                }
+            }
+        }
     }
 
-
-
-
-
+    /// <summary>
+    /// Klasa przechowująca ustawienia aplikacji.
+    /// </summary>
     public class ConfigurationSettings
     {
         public string SnortLogPath { get; set; }
-        public string ApiUrl { get; set; } 
-        public string SnortInstallationPath { get; set; } 
-
+        public string ApiUrl { get; set; }
+        public string SnortInstallationPath { get; set; }
         public string Role { get; set; } = "";
-
-        public DatabaseSettings DatabaseSettings { get; set; } = new DatabaseSettings();
-    }
-
-    public class DatabaseSettings
-    {
-        public string ConnectionString { get; set; } 
     }
 }

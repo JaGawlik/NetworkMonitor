@@ -1,8 +1,11 @@
 ﻿using NetworkMonitor.AppConfiguration;
+using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
 using NetworkMonitor.Windows;
 using Npgsql;
 using System;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Windows;
 
 namespace NetworkMonitor.Database
@@ -12,11 +15,13 @@ namespace NetworkMonitor.Database
         /// <summary>
         /// Inicjalizuje bazę danych, tworząc ją, jeśli nie istnieje, i dodając odpowiednie tabele.
         /// </summary>
+        /// 
+
         public void InitializeDatabase()
         {
             try
             {
-                string connectionString = GetOrCreateConnectionString();
+                string connectionString = GetConnectionStringForInitialization();
 
                 if (string.IsNullOrEmpty(connectionString))
                 {
@@ -25,10 +30,10 @@ namespace NetworkMonitor.Database
                     return;
                 }
 
-                // Tworzenie bazy danych, jeśli nie istnieje
-                EnsureDatabaseExists(connectionString, GetDatabaseNameFromConnectionString(connectionString));
+                string databaseName = GetDatabaseNameFromConnectionString(connectionString);
 
-                
+                EnsureDatabaseExists(connectionString, databaseName);
+
             }
             catch (Exception ex)
             {
@@ -40,18 +45,64 @@ namespace NetworkMonitor.Database
         /// <summary>
         /// Sprawdza, czy w bazie danych istnieją użytkownicy, i w razie potrzeby uruchamia okno dodawania użytkownika.
         /// </summary>
-        public bool EnsureUsersExist()
+        /// 
+        private string GetConnectionStringForInitialization()
+        {
+            var dbConfigWindow = new DatabaseConfigWindow();
+            if (dbConfigWindow.ShowDialog() == true)
+            {
+                return GenerateConnectionString(
+                    dbConfigWindow.Host,
+                    dbConfigWindow.Port,
+                    dbConfigWindow.Username,
+                    dbConfigWindow.Password,
+                    dbConfigWindow.DatabaseNameTextBox.Text
+                );
+            }
+
+            throw new Exception("Nie podano konfiguracji bazy danych.");
+        }
+        public async Task<bool> EnsureUsersExistAsync()
         {
             try
             {
-                string connectionString = ConfigurationManager.GetSetting("ConnectionString");
-
-                if (!UserRepository.HasUsers(connectionString))
+                if (ConfigurationManager.Settings.Role == "Administrator")
                 {
-                    var addUserWindow = new AddUserWindow(connectionString);
+                    MessageBox.Show("Wykrywanie API dla administratora nastąpi po zakończeniu inicjalizacji bazy danych.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    await ConfigurationManager.InitializeApiUrlAsync(); // Wykryj API tylko dla zwykłego użytkownika
+                }
+
+                if (string.IsNullOrWhiteSpace(ConfigurationManager.Settings.ApiUrl))
+                {
+                    string detectedApiUrl = await ConfigurationManager.DiscoverApiAddressAsync();
+                    ConfigurationManager.Settings.ApiUrl = detectedApiUrl;
+                    ConfigurationManager.SaveSettings();
+                }
+
+                using var client = new HttpClient { BaseAddress = new Uri(ConfigurationManager.Settings.ApiUrl) };
+                var response = await client.GetAsync("/api/users");
+
+                // Jeśli nie można pobrać użytkowników, rzucamy wyjątek
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception($"Błąd API: {response.ReasonPhrase}");
+                }
+
+                var users = await response.Content.ReadFromJsonAsync<List<User>>();
+
+                // Jeśli lista użytkowników jest pusta, wyświetlamy okno dodawania administratora
+                if (users == null || !users.Any())
+                {
+                    MessageBox.Show("Brak zarejestrowanych użytkowników. Dodaj pierwszego administratora.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    var addUserWindow = new AddUserWindow();
                     return addUserWindow.ShowDialog() == true;
                 }
 
+                // Jeśli użytkownicy istnieją, zwracamy true
                 return true;
             }
             catch (Exception ex)
@@ -60,6 +111,8 @@ namespace NetworkMonitor.Database
                 return false;
             }
         }
+    
+
 
         /// <summary>
         /// Tworzy bazę danych, jeśli nie istnieje, oraz tabele w niej.
@@ -184,8 +237,6 @@ namespace NetworkMonitor.Database
                         dbConfigWindow.DatabaseNameTextBox.Text
                     );
 
-                    ConfigurationManager.SetSetting("ConnectionString", connectionString);
-                    ConfigurationManager.SaveSettings();
                 }
             }
 

@@ -14,7 +14,7 @@ namespace NetworkMonitor
 {
     public partial class App : Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
@@ -34,11 +34,15 @@ namespace NetworkMonitor
                 args.Handled = true;
             };
 
+            // Ładowanie ustawień z pliku (lub tworzenie pliku, jeśli nie istnieje)
+            await ConfigurationManager.LoadSettingsAsync();
 
+            // Pobieramy rolę z pliku konfiguracji
             var role = ConfigurationManager.GetSetting("Role");
 
             if (string.IsNullOrEmpty(role))
             {
+                // Wyświetlamy okno wyboru roli, jeśli nie jest ustawiona
                 var roleWindows = new RoleSelectionWindow();
                 if (roleWindows.ShowDialog() == true)
                 {
@@ -48,21 +52,28 @@ namespace NetworkMonitor
                 }
             }
 
+            // Logika dla roli Administrator
             if (role == "Administrator")
             {
                 DatabaseService databaseService = new DatabaseService();
                 databaseService.InitializeDatabase();
 
-                if (!databaseService.EnsureUsersExist())
+                if (!await databaseService.EnsureUsersExistAsync())
                 {
-                    Shutdown();
+                    MessageBox.Show("Nie udało się dodać administratora. Aplikacja zostanie zamknięta.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    Shutdown(); // Zamykamy aplikację, jeśli dodanie użytkownika nie powiodło się
                     return;
                 }
+
+                await ConfigurationManager.InitializeApiUrlAsync();
+
 
                 StartProgram(role);
             }
             else if (role == "User")
             {
+                // Logika dla roli User
+                await ConfigurationManager.InitializeApiUrlAsync();
                 StartProgram(role);
             }
         }    
@@ -86,38 +97,6 @@ namespace NetworkMonitor
                 }
             }
         }
-
-        //private void StartMainProgramAsAdministrator()
-        //{
-        //    try
-        //    {
-        //        var snortManager = new SnortManagerService();
-        //        _snortProcess = snortManager.StartSnort();
-
-        //        if (_snortProcess == null)
-        //        {
-        //            Shutdown();
-        //            return;
-        //        }
-
-        //        // Utworzenie okna głównego
-        //        var mainWindow = new MainWindow(new User { Role = "Administrator" });
-
-        //        // Powiązanie danych (np. pobranie alertów z bazy danych)
-        //        var alertRepository = new AlertRepository(ConfigurationManager.GetSetting("ApiAddress"));
-        //        //mainWindow.DataContext = new AlertsViewModel(alertRepository.GetAlertsAsync());
-
-        //        // Wyświetlenie okna
-        //        MainWindow = mainWindow;
-        //        mainWindow.Show();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Błąd podczas uruchamiania programu: {ex.Message}");
-        //        MessageBox.Show($"Błąd podczas uruchamiania programu: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-        //        Shutdown();
-        //    }
-        //}
 
         private void StartProgram(string role)
         {
