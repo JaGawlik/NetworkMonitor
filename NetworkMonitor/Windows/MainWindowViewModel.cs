@@ -156,6 +156,7 @@ namespace NetworkMonitor
         {
             if (_isSnortInitialized)
             {
+                MessageBox.Show("Snort jest już uruchomiony i gotowy do działania.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             try
@@ -169,6 +170,8 @@ namespace NetworkMonitor
 
                 StartSnortAndMonitorLogs();
                 _isSnortInitialized = true;
+
+                MessageBox.Show("Konfiguracja zapisana i Snort został uruchomiony.", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
 
             }
             catch (Exception ex)

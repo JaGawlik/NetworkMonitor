@@ -144,7 +144,7 @@ namespace NetworkMonitor.Windows.Views
                     var mainWindowViewModel = Application.Current.MainWindow.DataContext as MainWindowViewModel;
                     mainWindowViewModel?.InitializeSnortAndMonitoring();
 
-                    MessageBox.Show("Konfiguracja zapisana i Snort został uruchomiony.", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                    
 
                     mainWindowViewModel.SelectedTabIndex = 0;
                 }
