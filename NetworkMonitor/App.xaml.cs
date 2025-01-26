@@ -50,30 +50,33 @@ namespace NetworkMonitor
                     ConfigurationManager.SetSetting("Role", role);
                     ConfigurationManager.SaveSettings();
                 }
-            }
 
-            // Logika dla roli Administrator
-            if (role == "Administrator")
-            {
-                DatabaseService databaseService = new DatabaseService();
-                databaseService.InitializeDatabase();
-
-                if (!await databaseService.EnsureUsersExistAsync())
+                if (role == "Administrator")
                 {
-                    MessageBox.Show("Nie udało się dodać administratora. Aplikacja zostanie zamknięta.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-                    Shutdown(); // Zamykamy aplikację, jeśli dodanie użytkownika nie powiodło się
-                    return;
+                    DatabaseService databaseService = new DatabaseService();
+                    databaseService.InitializeDatabase();
+
+                    if (!await databaseService.EnsureUsersExistAsync())
+                    {
+                        MessageBox.Show("Nie udało się dodać administratora. Aplikacja zostanie zamknięta.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Shutdown(); // Zamykamy aplikację, jeśli dodanie użytkownika nie powiodło się
+                        return;
+                    }
+
+                    await ConfigurationManager.InitializeApiUrlAsync();
+
+
+                    StartProgram(role);
                 }
-
-                await ConfigurationManager.InitializeApiUrlAsync();
-
-
-                StartProgram(role);
+                else if (role == "User")
+                {
+                    // Logika dla roli User
+                    await ConfigurationManager.InitializeApiUrlAsync();
+                    StartProgram(role);
+                }
             }
-            else if (role == "User")
+            else
             {
-                // Logika dla roli User
-                await ConfigurationManager.InitializeApiUrlAsync();
                 StartProgram(role);
             }
         }    
