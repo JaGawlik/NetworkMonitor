@@ -68,11 +68,11 @@ namespace NetworkMonitor.Database
             {
                 if (ConfigurationManager.Settings.Role == "Administrator")
                 {
-                    MessageBox.Show("Wykrywanie API dla administratora nastąpi po zakończeniu inicjalizacji bazy danych.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+                    //MessageBox.Show("Wykrywanie API dla administratora nastąpi po zakończeniu inicjalizacji bazy danych.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 else
                 {
-                    await ConfigurationManager.InitializeApiUrlAsync(); // Wykryj API tylko dla zwykłego użytkownika
+                    await ConfigurationManager.InitializeApiUrlAsync(); 
                 }
 
                 if (string.IsNullOrWhiteSpace(ConfigurationManager.Settings.ApiUrl))

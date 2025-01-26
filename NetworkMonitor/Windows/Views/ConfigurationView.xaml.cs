@@ -138,15 +138,30 @@ namespace NetworkMonitor.Windows.Views
                         return;
                     }
 
+                    var previousSettings = new
+                    {
+                        SnortInstallationPath = ConfigurationManager.Settings.SnortInstallationPath,
+                        LogFilePath = ConfigurationManager.Settings.SnortLogPath,
+                        ApiAddress = ConfigurationManager.Settings.ApiUrl
+                    };
+
+                    bool isConfigurationChanged =
+                        !string.Equals(previousSettings.SnortInstallationPath, viewModel.SnortInstallationPath, StringComparison.Ordinal) ||
+                        !string.Equals(previousSettings.LogFilePath, viewModel.LogFilePath, StringComparison.Ordinal) ||
+                        !string.Equals(previousSettings.ApiAddress, viewModel.ApiAddress, StringComparison.Ordinal);
+
+
                     // Zapisanie konfiguracji
                     viewModel.SaveSettings();
+
+                    if (isConfigurationChanged)
+                    {
+                        MessageBox.Show("Zmiany w konfiguracji Snort zostały zapisane.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
 
                     var mainWindowViewModel = Application.Current.MainWindow.DataContext as MainWindowViewModel;
                     mainWindowViewModel?.InitializeSnortAndMonitoring();
 
-                    
-
-                    mainWindowViewModel.SelectedTabIndex = 0;
                 }
                 catch (Exception ex)
                 {

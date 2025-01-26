@@ -4,6 +4,7 @@ using System.Windows;
 using NetworkMonitor.Model;
 using NetworkMonitor.Repository;
 using System.Net.Http.Json;
+using System.Configuration;
 
 namespace NetworkMonitor
 {
@@ -27,13 +28,24 @@ namespace NetworkMonitor
                 return;
             }
 
-            using (var httpClient = new HttpClient())
+            using (var httpClient = new HttpClient { BaseAddress = new Uri(AppConfiguration.ConfigurationManager.Settings.ApiUrl) })
             {
-                var loginRequest = new { Username = username, Password = password };
+                var loginRequest = new 
+                { 
+                    Username = username, 
+                    Password = password 
+                };
 
                 try
-                {
-                    var response = await httpClient.PostAsJsonAsync("http://localhost:5136/api/auth/login", loginRequest);
+                {                
+                    var response = await httpClient.PostAsJsonAsync("/api/users/login", loginRequest);
+
+                    string apiUrl = AppConfiguration.ConfigurationManager.Settings.ApiUrl;
+                    Console.WriteLine($"Base URL: {apiUrl}");
+
+                    // Wygeneruj pełny adres
+                    string fullUrl = $"{apiUrl}/api/users/login";
+                    Console.WriteLine($"Full URL: {fullUrl}");
 
                     if (response.IsSuccessStatusCode)
                     {

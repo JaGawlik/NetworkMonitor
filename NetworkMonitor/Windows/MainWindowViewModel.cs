@@ -171,8 +171,6 @@ namespace NetworkMonitor
                 StartSnortAndMonitorLogs();
                 _isSnortInitialized = true;
 
-                MessageBox.Show("Konfiguracja zapisana i Snort został uruchomiony.", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
-
             }
             catch (Exception ex)
             {

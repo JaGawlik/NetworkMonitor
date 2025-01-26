@@ -32,7 +32,9 @@ namespace ApiServer.Controllers
                     return BadRequest(new { Message = "Nazwa użytkownika i hasło są wymagane." });
                 }
 
-                var user = await UserRepository.AuthenticateAsync(_connectionString, loginRequest.Username, loginRequest.Password);
+                string hashedPassword = HashPassword(loginRequest.Password);
+
+                var user = await UserRepository.AuthenticateAsync(_connectionString, loginRequest.Username, hashedPassword);
 
                 if (user == null)
                 {
