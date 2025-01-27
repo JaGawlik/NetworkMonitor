@@ -142,20 +142,16 @@ namespace NetworkMonitor.AppConfiguration
         public ICommand BrowseSnortFolderCommand { get; }
         public ICommand SaveConnectionStringCommand { get; }
         public ConfigurationViewModel()
-        {           
+        {
             LogFilePath = ConfigurationManager.GetSetting("LogFilePath");
             ApiAddress = ConfigurationManager.GetSetting("ApiAddress");
             SnortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
 
-            DeviceList = new ObservableCollection<NetworkDevice>();
-
-            // Ładujemy urządzenia i ustawiamy wybrany interfejs
-           
-            var savedDevice = ConfigurationManager.Settings.SelectedDevice;
-            if (savedDevice != null)
+            if (ConfigurationManager.Settings.SelectedDevice != null)
             {
                 LoadDevices();
-                SelectedDevice = DeviceList.FirstOrDefault(d => d.Index == savedDevice.Index);
+                int savedIndex = ConfigurationManager.Settings.SelectedDevice.Index;
+                SelectedDevice = DeviceList.FirstOrDefault(device => device.Index == savedIndex);
             }
 
         }
@@ -209,7 +205,7 @@ namespace NetworkMonitor.AppConfiguration
                         RedirectStandardOutput = true,
                         UseShellExecute = false,
                         CreateNoWindow = true,
-                        WorkingDirectory = snortBinPath // Ustawienie katalogu roboczego
+                        WorkingDirectory = snortBinPath
                     }
                 };
 
@@ -219,6 +215,7 @@ namespace NetworkMonitor.AppConfiguration
 
                 ParseSnortOutput(output);
 
+                // Po wczytaniu listy urządzeń ustaw wybrany interfejs
                 var savedDevice = ConfigurationManager.Settings.SelectedDevice;
                 if (savedDevice != null)
                 {
@@ -230,6 +227,7 @@ namespace NetworkMonitor.AppConfiguration
                 MessageBox.Show($"Błąd podczas wykonywania snort -W: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private void ParseSnortOutput(string output)
         {

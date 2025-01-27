@@ -79,6 +79,7 @@ namespace NetworkMonitor.AppConfiguration
                 "ApiAddress" => Settings.ApiUrl,
                 "SnortInstallationPath" => Settings.SnortInstallationPath,
                 "Role" => Settings.Role,
+                "SelectedInterfaceIndex" => Settings.SelectedDevice.Index.ToString(),
                 _ => throw new KeyNotFoundException($"Klucz ustawienia '{key}' nie istnieje w konfiguracji.")
             };
         }
@@ -101,6 +102,12 @@ namespace NetworkMonitor.AppConfiguration
                     break;
                 case "Role":
                     Settings.Role = value;
+                    break;
+                case "SelectedInterfaceIndex":
+                    if (int.TryParse(value, out int index))
+                    {
+                        Settings.SelectedDevice.Index = index;
+                    }
                     break;
                 default:
                     throw new ArgumentException($"Nieznany klucz ustawienia: {key}");
@@ -194,7 +201,7 @@ namespace NetworkMonitor.AppConfiguration
         public string ApiUrl { get; set; }
         public string SnortInstallationPath { get; set; }
         public string Role { get; set; } = "";
-        public SelectedDeviceDetails SelectedDevice { get; set; } // Nowe pole
+        public SelectedDeviceDetails SelectedDevice { get; set; }
     }
 
     public class SelectedDeviceDetails
