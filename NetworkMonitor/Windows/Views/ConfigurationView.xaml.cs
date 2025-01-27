@@ -112,6 +112,14 @@ namespace NetworkMonitor.Windows.Views
                 }
             }
         }
+
+        private void LoadDevices_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ConfigurationViewModel viewModel)
+            {
+                viewModel.LoadDevices();
+            }
+        }
         private void SaveAndStartSnort_Click(object sender, RoutedEventArgs e)
         {
             var viewModel = DataContext as ConfigurationViewModel;

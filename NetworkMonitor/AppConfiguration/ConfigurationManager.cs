@@ -194,5 +194,13 @@ namespace NetworkMonitor.AppConfiguration
         public string ApiUrl { get; set; }
         public string SnortInstallationPath { get; set; }
         public string Role { get; set; } = "";
+        public SelectedDeviceDetails SelectedDevice { get; set; } // Nowe pole
+    }
+
+    public class SelectedDeviceDetails
+    {
+        public int Index { get; set; }
+        public string DeviceName { get; set; }
+        public string IpAddress { get; set; }
     }
 }

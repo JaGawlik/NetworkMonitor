@@ -10,14 +10,23 @@ namespace NetworkMonitor.Snort
 {
     public class SnortManagerService
     {
+        //private static SnortManagerService _instance;
+        //public static SnortManagerService Instance => _instance ??= new SnortManagerService();
+        //public string selectedInterface { get; set; }
         public Process StartSnort()
         {
             string snortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
             string snortLogPath = Path.Combine(snortInstallationPath, "log", "alert.ids");
             string snortPath = Path.Combine(snortInstallationPath, "bin", "snort.exe");
-            string arguments = $"-i 6 -c {Path.Combine(snortInstallationPath, "etc", "snort.conf")} -l {Path.Combine(snortInstallationPath, "log")} -A fast -N";
+            int? selectedIndex = ConfigurationManager.Settings.SelectedDevice?.Index;
+            string arguments = $"-i {selectedIndex} -c {Path.Combine(snortInstallationPath, "etc", "snort.conf")} -l {Path.Combine(snortInstallationPath, "log")} -A fast -N";
             string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
 
+            if (selectedIndex == null)
+            {
+                MessageBox.Show("Nie wybrano urządzenia do monitorowania.", "Błąd konfiguracji", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
+            }
             if (string.IsNullOrEmpty(snortInstallationPath))
             {
                 MessageBox.Show("Ścieżka instalacji Snorta nie została skonfigurowana.", "Błąd konfiguracji", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -77,40 +86,23 @@ namespace NetworkMonitor.Snort
             return null;
         }
 
-        //public Process StartSnort()
-        //{
-        //    string snortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
-        //    string snortLogPath = Path.Combine(snortInstallationPath, "log", "alert.ids");
-        //    string snortPath = Path.Combine(snortInstallationPath, "bin", "snort.exe");
-        //    string arguments = $"-i 6 -c {Path.Combine(snortInstallationPath, "etc", "snort.conf")} -l {Path.Combine(snortInstallationPath, "log")} -A fast -N";
-        //    string apiUrl = "http://localhost:5136";
+        private string ExecuteSnortCommand(string snortPath, string arguments)
+        {
+            var processStartInfo = new ProcessStartInfo
+            {
+                FileName = snortPath,
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-        //    string localIpAddress = ConfigurationManager.GetLocalIpAddress();
+            using var process = new Process { StartInfo = processStartInfo };
+            process.Start();
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
 
-        //    var snortProcess = SnortManager.StartSnort(snortPath, arguments);
-
-        //    if (snortProcess == null)
-        //    {
-        //        MessageBox.Show("Nie udało się uruchomić Snorta. Aplikacja zostanie zamknięta.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-        //        return null;
-        //    }
-
-        //    if (string.IsNullOrEmpty(snortInstallationPath))
-        //    {
-        //        MessageBox.Show("Ścieżka instalacji Snorta nie została skonfigurowana.", "Błąd konfiguracji", MessageBoxButton.OK, MessageBoxImage.Error);
-        //        return null;
-        //    }
-
-        //    if (!File.Exists(snortPath))
-        //    {
-        //        MessageBox.Show($"Nie znaleziono pliku Snort.exe w ścieżce: {snortPath}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-        //        return null;
-        //    }
-
-        //    var monitor = new SnortAlertMonitor(snortLogPath, apiUrl);
-        //    Task.Run(() => monitor.StartMonitoringAsync());
-
-        //    return snortProcess;
-        //}
+            return output;
+        }
     }
 }
