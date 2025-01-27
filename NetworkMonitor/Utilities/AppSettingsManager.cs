@@ -85,7 +85,5 @@ namespace NetworkMonitor.Utilities
                 throw new Exception($"Nie udało się utworzyć pliku appsettings.json: {ex.Message}");
             }
         }
-
-
     }
 }
