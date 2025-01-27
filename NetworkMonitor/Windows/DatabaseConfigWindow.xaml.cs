@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,7 +47,7 @@ namespace NetworkMonitor.Windows
             //string selectedDatabase = SQLDatabaseNameComboBox.SelectedItem?.ToString();
             UserDatabaseName = DatabaseNameTextBox.Text;
 
-            if (string.IsNullOrWhiteSpace(Host) || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) /*|| string.IsNullOrEmpty(selectedDatabase)*/ || string.IsNullOrEmpty(UserDatabaseName))
+            if (string.IsNullOrWhiteSpace(Host) || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrEmpty(UserDatabaseName))
             {
                 MessageBox.Show("Proszę wypełnić wszystkie pola.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -54,7 +55,6 @@ namespace NetworkMonitor.Windows
 
             string connectionString = $"Host={Host};Port={Port};Username={Username};Password={Password};Database={UserDatabaseName}";
             AppSettingsManager.UpdateConnectionString(connectionString);
-
 
 
             DialogResult = true;

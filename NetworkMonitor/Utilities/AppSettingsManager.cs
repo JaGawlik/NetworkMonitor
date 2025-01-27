@@ -41,9 +41,9 @@ namespace NetworkMonitor.Utilities
                 MessageBox.Show($"Błąd podczas zapisywania connection string: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-    
 
-    private static string FindAppSettingsFile()
+
+        private static string FindAppSettingsFile()
         {
             string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string targetFile = "appsettings.json";

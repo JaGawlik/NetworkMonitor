@@ -47,7 +47,7 @@ namespace NetworkMonitor.AppConfiguration
                 {
                     // Tworzymy plik konfiguracyjny z domyślnymi ustawieniami
                     Settings = new ConfigurationSettings();
-                    SaveSettings(); // Zapisujemy domyślne ustawienia w pliku
+                    SaveSettings();
                 }
             }
             catch (Exception ex)
