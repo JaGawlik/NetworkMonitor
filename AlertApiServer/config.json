@@ -1,9 +1,0 @@
-{
-  "SnortLogPath": null,
-  "ApiUrl": null,
-  "SnortInstallationPath": null,
-  "Role": "",
-  "DatabaseSettings": {
-    "ConnectionString": null
-  }
-}

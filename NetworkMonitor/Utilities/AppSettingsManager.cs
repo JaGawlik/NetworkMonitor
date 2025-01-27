@@ -45,11 +45,12 @@ namespace NetworkMonitor.Utilities
 
         private static string FindAppSettingsFile()
         {
+            // Znajdź katalog, w którym powinien znajdować się AlertApiServer.exe
             string currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            string targetFile = "appsettings.json";
+            string targetDirectory = Path.Combine(currentDirectory, "..", "..", "..", "AlertApiServer", "bin", "Release", "net8.0-windows");
 
-            // Ścieżka, gdzie plik powinien być tworzony
-            string expectedPath = Path.Combine(currentDirectory, targetFile);
+            string targetFile = "appsettings.json";
+            string expectedPath = Path.Combine(targetDirectory, targetFile);
 
             // Jeśli plik istnieje, zwróć jego ścieżkę
             if (File.Exists(expectedPath))
@@ -75,6 +76,7 @@ namespace NetworkMonitor.Utilities
                 };
 
                 string json = JsonConvert.SerializeObject(defaultSettings, Formatting.Indented);
+                Directory.CreateDirectory(targetDirectory); // Upewnij się, że katalog istnieje
                 File.WriteAllText(expectedPath, json);
 
                 MessageBox.Show("Utworzono nowy plik appsettings.json z domyślnymi ustawieniami.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
