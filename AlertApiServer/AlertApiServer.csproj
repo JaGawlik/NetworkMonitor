@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>4873afb1-4e3d-4ce8-91f9-123bd5b4414b</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <BaseOutputPath>C:\Users\Buzka\Desktop\ReleaseApi</BaseOutputPath>
+    <BaseOutputPath></BaseOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
