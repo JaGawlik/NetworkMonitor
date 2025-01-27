@@ -47,7 +47,7 @@ namespace NetworkMonitor.Windows
             //string selectedDatabase = SQLDatabaseNameComboBox.SelectedItem?.ToString();
             UserDatabaseName = DatabaseNameTextBox.Text;
 
-            if (string.IsNullOrWhiteSpace(Host) || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) /*|| string.IsNullOrEmpty(selectedDatabase)*/ || string.IsNullOrEmpty(UserDatabaseName))
+            if (string.IsNullOrWhiteSpace(Host) || string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrEmpty(UserDatabaseName))
             {
                 MessageBox.Show("Proszę wypełnić wszystkie pola.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
