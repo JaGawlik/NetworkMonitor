@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace AlertApiServer
 {
     public class Program
@@ -27,14 +29,7 @@ namespace AlertApiServer
                 });
             });
 
-            // Pobranie connection string dla logowania (opcjonalne do diagnostyki)
-            //string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-            if (builder.Environment.IsDevelopment())
-            {
-                string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-                Console.WriteLine($"Connection String: {connectionString}");
-            }
+            
 
             var app = builder.Build();
 
@@ -55,5 +50,6 @@ namespace AlertApiServer
             // Uruchomienie aplikacji
             app.Run();
         }
+
     }
 }

@@ -3,6 +3,7 @@ using Npgsql;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -34,7 +35,6 @@ namespace NetworkMonitor.Windows
         public DatabaseConfigWindow()
         {
             InitializeComponent();
-            //SQLDatabaseNameComboBox.ItemsSource = SQLDatabaseNames;
         }
 
         private void SaveAndInitialize_Click(object sender, RoutedEventArgs e)
@@ -55,8 +55,6 @@ namespace NetworkMonitor.Windows
 
             string connectionString = $"Host={Host};Port={Port};Username={Username};Password={Password};Database={UserDatabaseName}";
             AppSettingsManager.UpdateConnectionString(connectionString);
-
-            SaveAppSettingsFile(connectionString);
 
             DialogResult = true;
             Close();
@@ -91,44 +89,6 @@ namespace NetworkMonitor.Windows
             catch (Exception ex)
             {
                 MessageBox.Show($"Błąd podczas pobierania listy baz danych: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-        private void SaveAppSettingsFile(string connectionString)
-        {
-            try
-            {
-                // Ścieżka do pliku appsettings.json
-                string appSettingsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
-
-                // Struktura pliku JSON
-                var appSettings = new
-                {
-                    ConnectionStrings = new
-                    {
-                        DefaultConnection = connectionString
-                    },
-                    Logging = new
-                    {
-                        LogLevel = new
-                        {
-                            Default = "Information",
-                            Microsoft_AspNetCore = "Warning"
-                        }
-                    },
-                    AllowedHosts = "*"
-                };
-
-                // Serializacja do JSON
-                string json = JsonSerializer.Serialize(appSettings, new JsonSerializerOptions { WriteIndented = true });
-
-                // Zapis do pliku
-                File.WriteAllText(appSettingsPath, json);
-                Console.WriteLine($"Plik appsettings.json zapisany w: {appSettingsPath}");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Błąd podczas zapisywania pliku appsettings.json: {ex.Message}");
             }
         }
 
