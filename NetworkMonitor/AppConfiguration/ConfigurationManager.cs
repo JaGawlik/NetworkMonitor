@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace NetworkMonitor.AppConfiguration
 {
@@ -53,8 +55,8 @@ namespace NetworkMonitor.AppConfiguration
             catch (Exception ex)
             {
                 Console.WriteLine($"Błąd podczas ładowania konfiguracji: {ex.Message}");
-                Settings = new ConfigurationSettings(); 
-                SaveSettings(); 
+                Settings = new ConfigurationSettings();
+                SaveSettings();
             }
         }
 
@@ -80,6 +82,9 @@ namespace NetworkMonitor.AppConfiguration
                 "SnortInstallationPath" => Settings.SnortInstallationPath,
                 "Role" => Settings.Role,
                 "SelectedInterfaceIndex" => Settings.SelectedDevice.Index.ToString(),
+                "HomeNet" => Settings.HomeNet,
+                "LogDir" => Settings.LogDir,
+                "RulePath" => Settings.RulePath,
                 _ => throw new KeyNotFoundException($"Klucz ustawienia '{key}' nie istnieje w konfiguracji.")
             };
         }
@@ -108,6 +113,15 @@ namespace NetworkMonitor.AppConfiguration
                     {
                         Settings.SelectedDevice.Index = index;
                     }
+                    break;
+                case "HomeNet":
+                    Settings.HomeNet = value;
+                    break;
+                case "LogDir":
+                    Settings.LogDir = value;
+                    break;
+                case "RulePath":
+                    Settings.RulePath = value;
                     break;
                 default:
                     throw new ArgumentException($"Nieznany klucz ustawienia: {key}");
@@ -190,24 +204,147 @@ namespace NetworkMonitor.AppConfiguration
                 }
             }
         }
-    }
 
-    /// <summary>
-    /// Klasa przechowująca ustawienia aplikacji.
-    /// </summary>
-    public class ConfigurationSettings
-    {
-        public string SnortLogPath { get; set; }
-        public string ApiUrl { get; set; }
-        public string SnortInstallationPath { get; set; }
-        public string Role { get; set; } = "";
-        public SelectedDeviceDetails SelectedDevice { get; set; }
-    }
+        public static void UpdateSnortConfig()
+        {
+            try
+            {
+                string snortConfPath = Path.Combine(Settings.SnortInstallationPath, "etc", "snort.conf");
 
-    public class SelectedDeviceDetails
-    {
-        public int Index { get; set; }
-        public string DeviceName { get; set; }
-        public string IpAddress { get; set; }
+                if (!File.Exists(snortConfPath))
+                {
+                    throw new FileNotFoundException($"Plik konfiguracyjny Snorta nie istnieje: {snortConfPath}");
+                }
+
+                string[] lines = File.ReadAllLines(snortConfPath);
+
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    // Aktualizacja HOME_NET
+                    if (lines[i].StartsWith("ipvar HOME_NET"))
+                    {
+                        lines[i] = $"ipvar HOME_NET {Settings.HomeNet}";
+                    }
+
+                    // Aktualizacja logdir
+                    if (lines[i].StartsWith("config logdir:"))
+                    {
+                        lines[i] = $"config logdir: {Path.Combine(Settings.SnortInstallationPath, Settings.LogDir)}";
+                    }
+
+                    // Aktualizacja RULE_PATH
+                    if (lines[i].StartsWith("var RULE_PATH"))
+                    {
+                        lines[i] = $"var RULE_PATH {Path.Combine(Settings.SnortInstallationPath, Settings.RulePath)}";
+                    }
+                }
+
+                File.WriteAllLines(snortConfPath, lines);
+                Console.WriteLine("Plik snort.conf został pomyślnie zaktualizowany.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas aktualizacji pliku snort.conf: {ex.Message}");
+            }
+        }
+
+        public static bool ValidateSnortConfig()
+        {
+            try
+            {
+                string snortPath = Path.Combine(Settings.SnortInstallationPath, "bin", "snort.exe");
+                string snortConfPath = Path.Combine(Settings.SnortInstallationPath, "etc", "snort.conf");
+                int selectedInterfaceIndex = Settings.SelectedDevice?.Index ?? -1;
+
+                if (!File.Exists(snortPath))
+                {
+                    MessageBox.Show($"Nie znaleziono pliku Snort.exe pod ścieżką: {snortPath}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return false;
+                }
+
+                if (!File.Exists(snortConfPath))
+                {
+                    MessageBox.Show($"Nie znaleziono pliku konfiguracyjnego Snorta pod ścieżką: {snortConfPath}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return false;
+                }
+
+                if (selectedInterfaceIndex == -1)
+                {
+                    MessageBox.Show("Nie wybrano interfejsu sieciowego do testowania Snorta.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return false;
+                }
+
+                // Przygotowanie argumentów
+                string arguments = $"-i {selectedInterfaceIndex} -c \"{snortConfPath}\" -T";
+
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = snortPath,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = new Process { StartInfo = startInfo };
+
+                var outputBuilder = new System.Text.StringBuilder();
+                var errorBuilder = new System.Text.StringBuilder();
+
+                process.OutputDataReceived += (sender, args) => { if (args.Data != null) outputBuilder.AppendLine(args.Data); };
+                process.ErrorDataReceived += (sender, args) => { if (args.Data != null) errorBuilder.AppendLine(args.Data); };
+
+                process.Start();
+
+                // Uruchomienie asynchronicznego odbioru danych
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                // Czekaj na zakończenie procesu
+                process.WaitForExit();
+
+                if (process.ExitCode == 0)
+                {
+                    Console.WriteLine("Plik snort.conf został pomyślnie zweryfikowany.");
+                    MessageBox.Show("Konfiguracja Snorta jest poprawna.", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Błąd w snort.conf: {errorBuilder}");
+                    MessageBox.Show($"Błąd w pliku snort.conf:\n{errorBuilder}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Błąd podczas weryfikacji konfiguracji Snorta: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// Klasa przechowująca ustawienia aplikacji.
+        /// </summary>
+        public class ConfigurationSettings
+        {
+            public string SnortLogPath { get; set; }
+            public string ApiUrl { get; set; }
+            public string SnortInstallationPath { get; set; }
+            public string Role { get; set; } = "";
+            public SelectedDeviceDetails SelectedDevice { get; set; }
+            public string HomeNet { get; set; } = "192.168.0.0/24"; // Domyślnie lokalna sieć
+            public string LogDir { get; set; } = "log";             // Domyślny folder logów
+            public string RulePath { get; set; } = "rules";
+        }
+
+        public class SelectedDeviceDetails
+        {
+            public int Index { get; set; }
+            public string DeviceName { get; set; }
+            public string IpAddress { get; set; }
+        }
     }
 }

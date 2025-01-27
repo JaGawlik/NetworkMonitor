@@ -15,6 +15,8 @@ internal class SnortAlertMonitor
 
     public event Action<Alert> AlertReceived;
 
+    private Dictionary<string, DateTime> _recentAlerts = new();
+
     public SnortAlertMonitor(string logPath, string apiUrl, Dispatcher dispatcher)
     {
         _snortLogPath = logPath;
@@ -28,7 +30,7 @@ internal class SnortAlertMonitor
         }
 
         _regex = new Regex(
-            @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[\d+:\d+:\d+\]\s(?<message>.*?)\s\[\*\*\](\s\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[\d\.]+):\d+\s->\s(?<dstip>[\d\.]+):\d+",
+            @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[\d+:\d+:\d+\]\s(?<message>.*?)\s\[\*\*\](\s\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[a-fA-F0-9\:\.]+):\d+\s->\s(?<dstip>[a-fA-F0-9\:\.]+):\d+",
             RegexOptions.Compiled
         );
 
@@ -161,4 +163,23 @@ internal class SnortAlertMonitor
             Console.WriteLine($"Błąd podczas komunikacji z API: {ex.Message}");
         }
     }
+
+ 
+
+    private bool ShouldProcessAlert(string sid, string srcIp, int seconds)
+    {
+        string key = $"{sid}:{srcIp}";
+
+        if (_recentAlerts.TryGetValue(key, out DateTime lastAlertTime))
+        {
+            if ((DateTime.Now - lastAlertTime).TotalSeconds < seconds)
+            {
+                return false; // Ignoruj alert
+            }
+        }
+
+        _recentAlerts[key] = DateTime.Now; // Zapisz czas ostatniego alertu
+        return true; // Procesuj alert
+    }
+
 }

@@ -15,6 +15,13 @@ namespace NetworkMonitor.Snort
         //public string selectedInterface { get; set; }
         public Process StartSnort()
         {
+            ConfigurationManager.UpdateSnortConfig();
+            bool isValid = ConfigurationManager.ValidateSnortConfig();
+            if (!isValid)
+            {
+                Console.WriteLine("Snort.conf zawiera błędy.");
+            }
+
             string snortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
             string snortLogPath = Path.Combine(snortInstallationPath, "log", "alert.ids");
             string snortPath = Path.Combine(snortInstallationPath, "bin", "snort.exe");

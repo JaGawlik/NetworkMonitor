@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using NetworkMonitor.Snort;
+using static NetworkMonitor.AppConfiguration.ConfigurationManager;
 
 namespace NetworkMonitor.AppConfiguration
 {
