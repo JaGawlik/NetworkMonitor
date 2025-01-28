@@ -55,7 +55,7 @@ namespace NetworkMonitor.Snort
             }
 
             // Monitor Snort logs
-            var monitor = new SnortAlertMonitor(snortLogPath, apiUrl, Application.Current.Dispatcher);
+            var monitor = new SnortAlertMonitor(Application.Current.Dispatcher);
             Task.Run(() => monitor.StartMonitoringAsync());
 
             return snortProcess;
@@ -77,9 +77,23 @@ namespace NetworkMonitor.Snort
 
             try
             {
+                snortProcess.OutputDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        Console.WriteLine($"[Snort]: {e.Data}");
+                };
+
+                snortProcess.ErrorDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                        Console.WriteLine($"[Snort Error]: {e.Data}");
+                };
+
                 bool started = snortProcess.Start();
                 if (started)
                 {
+                    snortProcess.BeginOutputReadLine(); // Włącz odczyt danych z stdout
+                    snortProcess.BeginErrorReadLine();  // Włącz odczyt danych z stderr
                     Console.WriteLine("Snort został uruchomiony.");
                     return snortProcess;
                 }
@@ -92,6 +106,8 @@ namespace NetworkMonitor.Snort
             Console.WriteLine("Nie udało się uruchomić Snorta.");
             return null;
         }
+
+
 
         private string ExecuteSnortCommand(string snortPath, string arguments)
         {

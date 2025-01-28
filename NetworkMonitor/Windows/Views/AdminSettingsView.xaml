@@ -7,29 +7,24 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <StackPanel Margin="20">
-            <TextBlock Text="Zarządzanie Regułami Alertów" FontSize="20" Margin="0,0,0,20" />
+        <StackPanel>
+        <!-- Lista najczęstszych alertów -->
+        <TextBlock Text="Najczęstsze alerty:" FontWeight="Bold" Margin="0,10,0,5" />
+        <ListView x:Name="FrequentAlertsList" SelectionMode="Single" Margin="0,0,0,10">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="SID" DisplayMemberBinding="{Binding Sid}" Width="100" />
+                    <GridViewColumn Header="Wiadomość" DisplayMemberBinding="{Binding Message}" Width="300" />
+                    <GridViewColumn Header="Ilość" DisplayMemberBinding="{Binding Count}" Width="100" />
+                </GridView>
+            </ListView.View>
+        </ListView>
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="SID:" Width="100" VerticalAlignment="Center" />
-                <TextBox x:Name="SidTextBox" Width="200" />
-            </StackPanel>
+        <!-- Dodawanie reguły z wybranej pozycji -->
+        <Button Content="Dodaj regułę" Click="AddSelectedAlertRule_Click" HorizontalAlignment="Left" />
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="Źródłowy IP:" Width="100" VerticalAlignment="Center" />
-                <TextBox x:Name="SrcIpTextBox" Width="200" />
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="Limit (sekundy):" Width="100" VerticalAlignment="Center" />
-                <TextBox x:Name="LimitTextBox" Width="200" />
-            </StackPanel>
-
-            <Button Content="Dodaj Regułę" Click="AddRuleButton_Click" Margin="0,10,0,0" />
-
-            <ListBox x:Name="RulesListBox" Margin="0,20,0,0" Height="200" />
-
-            <Button Content="Zapisz Zmiany" Click="SaveChangesButton_Click" Margin="0,10,0,0" />
+        <!-- Zapis zmian -->
+        <Button Content="Zapisz zmiany" Click="SaveChangesButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0" />
         </StackPanel>
     </Grid>
 </UserControl>

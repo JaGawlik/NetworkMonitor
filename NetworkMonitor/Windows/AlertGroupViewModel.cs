@@ -30,5 +30,8 @@ namespace NetworkMonitor.Windows
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+
     }
+
 }

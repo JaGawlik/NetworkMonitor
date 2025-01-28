@@ -15,10 +15,10 @@ internal class SnortAlertMonitor
 
     public event Action<Alert> AlertReceived;
 
-    public SnortAlertMonitor(string logPath, string apiUrl, Dispatcher dispatcher)
+    public SnortAlertMonitor(Dispatcher dispatcher)
     {
-        _snortLogPath = logPath;
-        _apiUrl = apiUrl;
+        _snortLogPath = NetworkMonitor.AppConfiguration.ConfigurationManager.GetSetting("LogFilePath");
+        _apiUrl = NetworkMonitor.AppConfiguration.ConfigurationManager.GetSetting("ApiAddress");
         _localIP = NetworkMonitor.AppConfiguration.ConfigurationManager.GetLocalIpAddress();
 
         if (!File.Exists(_snortLogPath))
@@ -28,9 +28,9 @@ internal class SnortAlertMonitor
         }
 
         _regex = new Regex(
-            @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[\d+:\d+:\d+\]\s(?<message>.*?)\s\[\*\*\](\s\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[a-fA-F0-9\:\.]+):\d+\s->\s(?<dstip>[a-fA-F0-9\:\.]+):\d+",
-            RegexOptions.Compiled
-        );
+             @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+:\d+)\]\s(?<message>.*?)\s\[\*\*\](\s\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[a-fA-F0-9\:\.]+):\d+\s->\s(?<dstip>[a-fA-F0-9\:\.]+):\d+",
+             RegexOptions.Compiled
+         );
 
     }
 
@@ -159,6 +159,50 @@ internal class SnortAlertMonitor
         catch (Exception ex)
         {
             Console.WriteLine($"Błąd podczas komunikacji z API: {ex.Message}");
+        }
+    }
+
+    public List<(string Sid, string Message, int Count)> GetFrequentAlerts(int topN = 10)
+    {
+        if (!File.Exists(_snortLogPath))
+        {
+            Console.WriteLine($"Plik logów Snorta nie istnieje: {_snortLogPath}");
+            return new List<(string Sid, string Message, int Count)>();
+        }
+
+        var alertCounts = new Dictionary<string, (string Message, int Count)>();
+
+        foreach (var line in File.ReadLines(_snortLogPath))
+        {
+            // Przykład logu: [**] [1:12345:1] Alert Message [**]
+            var match = _regex.Match(line);
+            if (!match.Success) continue;
+
+            string sid = match.Groups["sid"].Value; // Możesz dostosować grupy w regex
+            string message = match.Groups["message"].Value;
+
+            if (!alertCounts.ContainsKey(sid))
+            {
+                alertCounts[sid] = (message, 0);
+            }
+
+            alertCounts[sid] = (alertCounts[sid].Message, alertCounts[sid].Count + 1);
+        }
+
+        return alertCounts
+            .OrderByDescending(kvp => kvp.Value.Count)
+            .Take(topN)
+            .Select(kvp => (Sid: kvp.Key, Message: kvp.Value.Message, Count: kvp.Value.Count))
+            .ToList();
+    }
+
+    public void DisplayFrequentAlerts(int topN = 10)
+    {
+        var frequentAlerts = GetFrequentAlerts(topN);
+        Console.WriteLine("Najczęstsze alerty w logach Snorta:");
+        foreach (var alert in frequentAlerts)
+        {
+            Console.WriteLine($"SID: {alert.Sid}, Wiadomość: {alert.Message}, Liczba wystąpień: {alert.Count}");
         }
     }
 

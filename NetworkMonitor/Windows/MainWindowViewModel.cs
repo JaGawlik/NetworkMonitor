@@ -165,7 +165,7 @@ namespace NetworkMonitor
                 string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
 
                 _snortManagerService = new SnortManagerService();
-                _snortAlertMonitor = new SnortAlertMonitor(snortLogPath, apiUrl, Application.Current.Dispatcher);
+                _snortAlertMonitor = new SnortAlertMonitor(Application.Current.Dispatcher);
                 _snortAlertMonitor.AlertReceived += OnAlertReceived;
 
                 StartSnortAndMonitorLogs();
@@ -314,44 +314,6 @@ namespace NetworkMonitor
                 MessageBox.Show($"Błąd podczas aktualizacji alertu: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        //public async Task<User> LoginUserAsync(string username, string password)
-        //{
-        //    try
-        //    {
-        //        using var client = new HttpClient();
-        //        client.BaseAddress = new Uri(ConfigurationManager.GetSetting("ApiAddress"));
-        //        var credentials = new { Username = username, Password = password };
-
-        //        var response = await client.PostAsJsonAsync("/api/auth/login", credentials);
-
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            var user = await response.Content.ReadFromJsonAsync<User>();
-        //            if (user != null)
-        //            {
-        //                CurrentUser = user;
-        //                IsAdminLoggedIn = true;
-
-        //                AlertGroupViewModels.Clear();
-
-        //                LoadAlerts();
-
-        //                return user;
-        //            }
-        //        }
-        //        else
-        //        {
-        //            Console.WriteLine($"Błąd logowania: {response.StatusCode} - {response.ReasonPhrase}");
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Błąd podczas logowania: {ex.Message}");
-        //    }
-
-        //    return null;
-        //}
 
 
 
