@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -23,7 +24,6 @@ namespace NetworkMonitor.Windows
             }
         }
 
-        // Wybrany alert
         private FrequentAlert _selectedFrequentAlert;
         public FrequentAlert SelectedFrequentAlert
         {
@@ -35,20 +35,16 @@ namespace NetworkMonitor.Windows
             }
         }
 
-
         public AdminSettingsViewModel()
-        {           
-            FrequentAlerts = new ObservableCollection<FrequentAlert>();
+        {
             LoadRulesFromConfig();
-            Console.WriteLine($"ViewModel stworzony. Początkowa liczba alertów: {FrequentAlerts.Count}");
         }
 
-        // Załaduj najczęstsze alerty
         public async Task LoadFrequentAlertsAsync()
         {
             var snortAlertMonitor = new SnortAlertMonitor(System.Windows.Application.Current.Dispatcher);
             var alerts = await snortAlertMonitor.GetFrequentAlertsAsync();
-            
+
             FrequentAlerts.Clear();
 
             foreach (var alert in alerts)
@@ -60,12 +56,11 @@ namespace NetworkMonitor.Windows
                     Count = alert.Count
                 });
             }
-            Console.WriteLine($"Liczba alertów w FrequentAlerts: {FrequentAlerts.Count}");
         }
 
         public void AddRule(string sid, string sourceIp, int timeLimit)
         {
-            if (Rules.Any(r => r.Sid == sid))
+            if (RuleExists(sid)) // Sprawdzenie przed dodaniem
             {
                 MessageBox.Show("Reguła z tym SID już istnieje!", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -79,7 +74,12 @@ namespace NetworkMonitor.Windows
             };
 
             Rules.Add(rule);
-            Console.WriteLine($"Dodano regułę: SID={sid}, TimeLimit={timeLimit}s");
+        }
+
+
+        public bool RuleExists(string sid, string ip = null)
+        {
+            return Rules.Any(r => r.Sid == sid && (ip == null || r.SourceIp == ip));
         }
 
         public void LoadRulesFromConfig()
@@ -91,21 +91,57 @@ namespace NetworkMonitor.Windows
             {
                 Rules.Add(rule);
             }
-
-            Console.WriteLine($"Załadowano {Rules.Count} reguł z threshold.conf");
         }
+
         public void SaveRules()
         {
             ThresholdConfigManager.SaveRules(Rules.ToList());
-            Console.WriteLine("Reguły zostały zapisane.");
+        }
+
+        public void AddSuppressRule(string sid, string track, string ip = null, int? port = null)
+        {
+            if (RuleExists(sid, ip))
+            {
+                throw new Exception($"Reguła suppress dla SID={sid} i IP={ip} już istnieje!");
+            }
+
+            var rule = new AlertFilterRule
+            {
+                Sid = sid,
+                SourceIp = ip,
+                TimeLimitSeconds = 0
+            };
+
+            Rules.Add(rule);
+            ThresholdConfigManager.AddSuppressRule(int.Parse(sid), track, ip, port);
+        }
+
+        public void AddEventFilterRule(string sid, string track, string ip, int? port, int count, int seconds)
+        {
+            if (RuleExists(sid, ip))
+            {
+                throw new Exception($"Reguła event_filter dla SID={sid} i IP={ip} już istnieje!");
+            }
+
+            var rule = new AlertFilterRule
+            {
+                Sid = sid,
+                SourceIp = ip,
+                TimeLimitSeconds = seconds
+            };
+
+            Rules.Add(rule);
+            ThresholdConfigManager.AddEventFilterRule(int.Parse(sid), track, ip, port, count, seconds);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
+
     public class AlertFilterRule
     {
         public string Sid { get; set; }

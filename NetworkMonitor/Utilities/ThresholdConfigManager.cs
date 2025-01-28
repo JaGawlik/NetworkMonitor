@@ -96,6 +96,51 @@ namespace NetworkMonitor.Utilities
             File.WriteAllLines(ThresholdFilePath, lines);
             Console.WriteLine($"Zapisano {rules.Count} reguł do {ThresholdFilePath}");
         }
+
+        public static void AddSuppressRule(int sigId, string trackBy, string ip = null, int? port = null)
+        {
+            var rule = $"suppress gen_id 1, sig_id {sigId}, track {trackBy}";
+            if (!string.IsNullOrWhiteSpace(ip))
+            {
+                rule += $", ip {ip}";
+            }
+            if (port.HasValue)
+            {
+                rule += $":{port}";
+            }
+
+            File.AppendAllText(ThresholdFilePath, rule + Environment.NewLine);
+            Console.WriteLine($"Dodano regułę suppress: {rule}");
+        }
+
+        public static void AddEventFilterRule(int sigId, string trackBy, string ip, int? port, int count, int seconds)
+        {
+            var rule = $"event_filter gen_id 1, sig_id {sigId}, type limit, track {trackBy}, count {count}, seconds {seconds}";
+            if (!string.IsNullOrWhiteSpace(ip))
+            {
+                rule += $", ip {ip}";
+            }
+            if (port.HasValue)
+            {
+                rule += $":{port}";
+            }
+
+            File.AppendAllText(ThresholdFilePath, rule + Environment.NewLine);
+            Console.WriteLine($"Dodano regułę event_filter: {rule}");
+        }
+
+        public static bool RuleExists(string rule)
+        {
+            if (!File.Exists(ThresholdFilePath))
+            {
+                return false;
+            }
+
+            var existingRules = File.ReadAllLines(ThresholdFilePath);
+            return existingRules.Any(line => line.Trim() == rule.Trim());
+        }
+
+
     }
 }
 

@@ -182,8 +182,9 @@ namespace NetworkMonitor
 
         public async void LoadAlerts()
         {
-            if (_isSearching)
+            if (_isSearching || _alertRepository == null)
             {
+                Console.WriteLine("Nie można załadować alertów, ponieważ `_alertRepository` jest null lub trwa wyszukiwanie.");
                 return;
             }
 

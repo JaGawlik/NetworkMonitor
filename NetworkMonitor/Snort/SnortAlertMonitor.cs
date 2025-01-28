@@ -122,12 +122,27 @@ internal class SnortAlertMonitor
         if (string.IsNullOrWhiteSpace(ipWithPort))
             return (null, null);
 
-        var parts = ipWithPort.Split(':');
-        string ip = parts[0];
-        int? port = parts.Length > 1 && int.TryParse(parts[1], out int parsedPort) ? parsedPort : null;
+        if (ipWithPort.Contains('[')) // Obsługa IPv6 w formacie [::1]:8080
+        {
+            var match = Regex.Match(ipWithPort, @"\[(?<ip>.+)\](:(?<port>\d+))?");
+            if (match.Success)
+            {
+                string ip = match.Groups["ip"].Value;
+                int? port = match.Groups["port"].Success ? int.Parse(match.Groups["port"].Value) : null;
+                return (ip, port);
+            }
+        }
+        else // Obsługa IPv4 lub IPv6 bez nawiasów
+        {
+            var parts = ipWithPort.Split(':');
+            string ip = string.Join(":", parts.Take(parts.Length - 1)); // Adres IPv6 zawiera dwukropki
+            int? port = int.TryParse(parts.Last(), out int parsedPort) ? parsedPort : null;
+            return (ip, port);
+        }
 
-        return (ip, port);
+        return (ipWithPort, null);
     }
+
 
     private async Task SendAlertToApiAsync(Alert alert)
     {

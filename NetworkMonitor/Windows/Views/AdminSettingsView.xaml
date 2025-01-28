@@ -3,37 +3,102 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:windows="clr-namespace:NetworkMonitor.Windows" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="600" d:DesignWidth="900">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.5*"/>
+            <!-- Lewa sekcja -->
+            <ColumnDefinition Width="2.5*"/>
+            <!-- Prawa sekcja -->
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <!-- Główna część -->
             <RowDefinition Height="Auto"/>
+            <!-- Dolna sekcja -->
         </Grid.RowDefinitions>
 
-        <!-- Lista najczęstszych alertów -->
-        <ListBox x:Name="FrequentAlertsList" Grid.Row="0" 
-         ItemsSource="{Binding FrequentAlerts}" 
-         SelectedItem="{Binding SelectedFrequentAlert}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="SID: " FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Sid}" Margin="5,0"/>
-                        <TextBlock Text=" | Wiadomość: " FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Message}" Margin="5,0"/>
-                        <TextBlock Text=" | Liczba wystąpień: " FontWeight="Bold"/>
-                        <TextBlock Text="{Binding Count}" Margin="5,0"/>
-                    </StackPanel>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <!-- Lewa sekcja: Lista najczęstszych alertów -->
+        <Border Grid.Column="0" Grid.Row="0" Margin="10" BorderBrush="Gray" BorderThickness="1">
+            <DockPanel>
+                <TextBlock Text="Lista najczęstszych alertów" FontWeight="Bold" FontSize="16" Margin="5" DockPanel.Dock="Top" HorizontalAlignment="Center"/>
+                <ListBox x:Name="FrequentAlertsList" 
+                         ItemsSource="{Binding FrequentAlerts}" 
+                         SelectedItem="{Binding SelectedFrequentAlert}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="SID: " FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Sid}" Margin="5,0"/>
+                                <TextBlock Text=" | Wiadomość: " FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Message}" Margin="5,0"/>
+                                <TextBlock Text=" | Liczba wystąpień: " FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Count}" Margin="5,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
 
-        <!-- Przyciski akcji -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10">
-            <Button Content="Dodaj regułę" Click="AddSelectedAlertRule_Click" Margin="0,0,10,0"/>
-            <Button Content="Zapisz zmiany" Click="SaveChangesButton_Click"/>
+        <!-- Przyciski akcji (pod listą alertów) -->
+        <StackPanel Grid.Column="0" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="15">
+            <Button Content="Dodaj regułę z listy" Click="AddSelectedAlertRule_Click" Margin="0,0,0,0" FontSize="15"/>
         </StackPanel>
+
+        <!-- Prawa sekcja: Sekcja dodawania reguły -->
+        <Border Grid.Column="1" Grid.RowSpan="2" Margin="10" BorderBrush="Gray" BorderThickness="1">
+            <StackPanel Margin="10">
+                <TextBlock Text="Dodaj nową regułę ignorowania" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" HorizontalAlignment="Center" />
+
+                <!-- Formularz dodawania reguły -->
+                <Grid Margin="0,0,0,10" HorizontalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60" />
+                        <!-- Label width -->
+                        <ColumnDefinition Width="150" />
+                        <!-- Input width -->
+                        <ColumnDefinition Width="60" />
+                        <!-- Label width -->
+                        <ColumnDefinition Width="150" />
+                        <!-- Input width -->
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Pierwszy rząd -->
+                    <TextBlock Text="SID:" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" FontSize="15"/>
+                    <TextBox x:Name="SidInput" Width="120" Height="25" Margin="0,0,10,0" Grid.Row="0" Grid.Column="1" 
+                             ToolTip="Unikalny identyfikator alertu (Signature ID), który chcesz ignorować. SID jest przypisany do każdej reguły w Snort." />
+
+                    <TextBlock Text="Track:" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" FontSize="15"/>
+                    <ComboBox x:Name="TrackComboBox" Width="120" Height="25" Margin="0,0,10,0" Grid.Row="0" Grid.Column="3"
+                              ToolTip="Określa, czy reguła ma działać dla adresu źródłowego (by_src) czy docelowego (by_dst).">
+                        <ComboBoxItem Content="by_src" ToolTip="Śledzenie na podstawie adresu źródłowego (by_src)." />
+                        <ComboBoxItem Content="by_dst" ToolTip="Śledzenie na podstawie adresu docelowego (by_dst)." />
+                    </ComboBox>
+
+                    <!-- Drugi rząd -->
+                    <TextBlock Text="IP:" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" FontSize="15"/>
+                    <TextBox x:Name="IpInput" Width="120" Height="25" Margin="0,5,10,0" Grid.Row="1" Grid.Column="1"
+                             ToolTip="Opcjonalne. Adres IP, dla którego reguła ma działać. Jeśli pozostawisz puste, reguła będzie działać dla wszystkich adresów IP." />
+
+                    <TextBlock Text="Port:" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" FontSize="15"/>
+                    <TextBox x:Name="PortInput" Width="120" Height="25" Margin="0,5,10,0" Grid.Row="1" Grid.Column="3"
+                             ToolTip="Opcjonalne. Port, dla którego reguła ma działać. Jeśli pozostawisz puste, reguła będzie działać dla wszystkich portów." />
+                </Grid>
+
+                <!-- Przyciski dodawania reguły -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Content="Ignortuj alerty" Click="AddSuppressRule_Click" Margin="0,0,10,0" FontSize="12" />
+                    <Button Content="Ogranicz alerty" Click="AddEventFilterRule_Click" FontSize="12"/>
+                </StackPanel>
+
+                <TextBlock x:Name="ErrorMessage" Foreground="Red" Visibility="Collapsed" Margin="0,5,0,5" />
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>
