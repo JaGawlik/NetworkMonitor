@@ -74,8 +74,8 @@ internal class SnortAlertMonitor
             string alertMessage = match.Groups["message"].Value;
             string priority = match.Groups["priority"].Value;
             string protocol = match.Groups["protocol"].Value;
-            string srcIp = match.Groups["srcip"].Value;
-            string dstIp = match.Groups["dstip"].Value;
+            (string srcIp, int? srcPort) = ExtractIpAndPort(match.Groups["srcip"].Value);
+            (string dstIp, int? dstPort) = ExtractIpAndPort(match.Groups["dstip"].Value);
 
             string sidString = match.Groups["sid"].Value.Split(':')[1]; // Pobiera środkową wartość (np. "129:20:1" → "20")
             int sid = int.TryParse(sidString, out int parsedSid) ? parsedSid : 0;
@@ -101,7 +101,9 @@ internal class SnortAlertMonitor
                     Timestamp = timestamp,
                     AlertMessage = alertMessage,
                     SourceIp = srcIp,
+                    SourcePort = srcPort,
                     DestinationIp = dstIp,
+                    DestinationPort = dstPort,
                     Protocol = protocol,
                     SignatureId = sid,
                     Status = "new",
@@ -113,6 +115,18 @@ internal class SnortAlertMonitor
                 AlertReceived?.Invoke(alert);
             }
         }
+    }
+
+    private (string ip, int? port) ExtractIpAndPort(string ipWithPort)
+    {
+        if (string.IsNullOrWhiteSpace(ipWithPort))
+            return (null, null);
+
+        var parts = ipWithPort.Split(':');
+        string ip = parts[0];
+        int? port = parts.Length > 1 && int.TryParse(parts[1], out int parsedPort) ? parsedPort : null;
+
+        return (ip, port);
     }
 
     private async Task SendAlertToApiAsync(Alert alert)

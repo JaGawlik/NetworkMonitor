@@ -423,7 +423,11 @@ namespace NetworkMonitor
                 _isSearching = true; // Zablokuj odświeżanie
                 var alerts = await _alertRepository.GetAlertsAsync();
 
-                var filteredAlerts = alerts.Where(a => a.SourceIp == SearchSourceIp || a.DestinationIp == SearchSourceIp).ToList();
+                var filteredAlerts = alerts
+                .Where(a => RemovePort(a.SourceIp) == RemovePort(SearchSourceIp) ||
+                            RemovePort(a.DestinationIp) == RemovePort(SearchSourceIp))
+                .ToList();
+
 
                 GroupAndDisplayAlerts(filteredAlerts);
             }
@@ -432,6 +436,16 @@ namespace NetworkMonitor
                 Console.WriteLine($"Błąd podczas wyszukiwania alertów: {ex.Message}");
             }
         }
+
+        private string RemovePort(string ipWithPort)
+        {
+            if (string.IsNullOrWhiteSpace(ipWithPort))
+                return string.Empty;
+
+            var parts = ipWithPort.Split(':'); // Podział na IP i port
+            return parts[0]; // Zwracamy tylko IP
+        }
+
 
         private void ResetSearch()
         {

@@ -30,13 +30,15 @@ namespace AlertApiServer.Controllers
                 conn.Open();
 
                 string query = @"
-                INSERT INTO alerts (timestamp, alert_message, source_ip, destination_ip, protocol, status, snort_instance, signature_id)
-                VALUES (@timestamp, @alertMessage, @sourceIp, @destinationIp, @protocol, @status, @snortInstance, @signatureId)";
+                INSERT INTO alerts (timestamp, alert_message, source_ip, source_port, destination_ip, destination_port, protocol, status, snort_instance, signature_id)
+                VALUES (@timestamp, @alertMessage, @sourceIp, @sourcePort, @destinationIp, @destinationPort, @protocol, @status, @snortInstance, @signatureId)";
                 using var cmd = new NpgsqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("timestamp", alert.Timestamp);
                 cmd.Parameters.AddWithValue("alertMessage", alert.AlertMessage);
                 cmd.Parameters.AddWithValue("sourceIp", alert.SourceIp);
+                cmd.Parameters.AddWithValue("sourcePort", alert.SourcePort ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("destinationIp", alert.DestinationIp);
+                cmd.Parameters.AddWithValue("destinationPort", alert.DestinationPort ?? (object)DBNull.Value);
                 cmd.Parameters.AddWithValue("protocol", alert.Protocol);
                 cmd.Parameters.AddWithValue("status", alert.Status);
                 cmd.Parameters.AddWithValue("snortInstance", alert.SnortInstance);
@@ -100,7 +102,9 @@ namespace AlertApiServer.Controllers
                         Timestamp = reader.GetDateTime(reader.GetOrdinal("timestamp")),
                         AlertMessage = reader.GetString(reader.GetOrdinal("alert_message")),
                         SourceIp = reader.GetString(reader.GetOrdinal("source_ip")),
+                        SourcePort = reader.IsDBNull(reader.GetOrdinal("source_port")) ? null : reader.GetInt32(reader.GetOrdinal("source_port")),
                         DestinationIp = reader.GetString(reader.GetOrdinal("destination_ip")),
+                        DestinationPort = reader.IsDBNull(reader.GetOrdinal("destination_port")) ? null : reader.GetInt32(reader.GetOrdinal("destination_port")),
                         Protocol = reader.GetString(reader.GetOrdinal("protocol")),
                         Status = reader.GetString(reader.GetOrdinal("status")),
                         SnortInstance = reader.GetString(reader.GetOrdinal("snort_instance")),
