@@ -325,6 +325,8 @@ namespace NetworkMonitor.AppConfiguration
         }
 
 
+
+
         /// <summary>
         /// Klasa przechowująca ustawienia aplikacji.
         /// </summary>

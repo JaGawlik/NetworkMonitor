@@ -15,8 +15,6 @@ internal class SnortAlertMonitor
 
     public event Action<Alert> AlertReceived;
 
-    private Dictionary<string, DateTime> _recentAlerts = new();
-
     public SnortAlertMonitor(string logPath, string apiUrl, Dispatcher dispatcher)
     {
         _snortLogPath = logPath;
@@ -164,7 +162,7 @@ internal class SnortAlertMonitor
         }
     }
 
- 
+    private Dictionary<string, DateTime> _recentAlerts = new();
 
     private bool ShouldProcessAlert(string sid, string srcIp, int seconds)
     {

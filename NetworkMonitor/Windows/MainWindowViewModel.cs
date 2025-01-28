@@ -282,10 +282,22 @@ namespace NetworkMonitor
                     DataContext = new ConfigurationViewModel()
                 };
             }
+            else if (SelectedTabIndex == 2)
+            {
+                if (IsAdminLoggedIn)
+                {
+                    CurrentView = new AdminSettingsView
+                    {
+                        DataContext = new AdminSettingsViewModel()
+                    };
+                }
+                else
+                {
+                    MessageBox.Show("Nie masz uprawnień do tego widoku. Zaloguj się jako administrator.", "Brak dostępu", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    SelectedTabIndex = 0; // Przełączenie na widok domyślny
+                }
+            }
         }
-
-
-
 
         public async Task UpdateAlertStatus(int alertId, string newStatus)
         {
@@ -303,43 +315,43 @@ namespace NetworkMonitor
             }
         }
 
-        public async Task<User> LoginUserAsync(string username, string password)
-        {
-            try
-            {
-                using var client = new HttpClient();
-                client.BaseAddress = new Uri(ConfigurationManager.GetSetting("ApiAddress"));
-                var credentials = new { Username = username, Password = password };
+        //public async Task<User> LoginUserAsync(string username, string password)
+        //{
+        //    try
+        //    {
+        //        using var client = new HttpClient();
+        //        client.BaseAddress = new Uri(ConfigurationManager.GetSetting("ApiAddress"));
+        //        var credentials = new { Username = username, Password = password };
 
-                var response = await client.PostAsJsonAsync("/api/auth/login", credentials);
+        //        var response = await client.PostAsJsonAsync("/api/auth/login", credentials);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var user = await response.Content.ReadFromJsonAsync<User>();
-                    if (user != null)
-                    {
-                        CurrentUser = user;
-                        IsAdminLoggedIn = user.Role == "Administrator";
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            var user = await response.Content.ReadFromJsonAsync<User>();
+        //            if (user != null)
+        //            {
+        //                CurrentUser = user;
+        //                IsAdminLoggedIn = true;
 
-                        AlertGroupViewModels.Clear();
+        //                AlertGroupViewModels.Clear();
 
-                        LoadAlerts();
+        //                LoadAlerts();
 
-                        return user;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"Błąd logowania: {response.StatusCode} - {response.ReasonPhrase}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Błąd podczas logowania: {ex.Message}");
-            }
+        //                return user;
+        //            }
+        //        }
+        //        else
+        //        {
+        //            Console.WriteLine($"Błąd logowania: {response.StatusCode} - {response.ReasonPhrase}");
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Błąd podczas logowania: {ex.Message}");
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
 
 
@@ -458,9 +470,6 @@ namespace NetworkMonitor
                 Console.WriteLine($"Błąd podczas wyszukiwania alertów: {ex.Message}");
             }
         }
-
-
-
 
         private void ResetSearch()
         {

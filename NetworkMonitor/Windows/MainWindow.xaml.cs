@@ -44,6 +44,8 @@ namespace NetworkMonitor
                 // Pobranie zalogowanego użytkownika
                 var loggedUser = loginWindow.LoggedUser;
                 viewModel.CurrentUser = loggedUser;
+                viewModel.IsAdminLoggedIn = true;
+
 
                 // Wyświetlenie komunikatu
                 MessageBox.Show($"Zalogowano jako: {viewModel.CurrentUser.Username}",
@@ -68,13 +70,14 @@ namespace NetworkMonitor
 
             // Ustawienie użytkownika jako niezalogowanego
             viewModel.CurrentUser = new User { Role = "Guest", Username = "Niezalogowany" };
+            viewModel.IsAdminLoggedIn = false;
+            viewModel.SelectedTabIndex = 0;
 
             // Wyświetlenie komunikatu
             MessageBox.Show("Wylogowano. Widoczne będą tylko alerty związane z lokalnym adresem IP.",
                 "Wylogowanie", MessageBoxButton.OK, MessageBoxImage.Information);
 
             Console.WriteLine("Wylogowano. Rola: Guest");
-
             // Wyczyść alerty i załaduj tylko te przypisane do lokalnego IP
             viewModel.AlertGroupViewModels.Clear();
             viewModel.LoadAlerts();
