@@ -2,9 +2,10 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:NetworkMonitor"
+             xmlns:converters="clr-namespace:NetworkMonitor.Converters"
              ShutdownMode="OnExplicitShutdown"
              >
     <Application.Resources>
-         
+        <converters:StatusToEnabledConverter x:Key="StatusToEnabledConverter" />
     </Application.Resources>
 </Application>

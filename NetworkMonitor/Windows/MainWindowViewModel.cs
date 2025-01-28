@@ -18,6 +18,8 @@ using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
 using NetworkMonitor.Windows.Views;
 using NetworkMonitor.Utilities;
+using System.Globalization;
+using System.Windows.Data;
 
 namespace NetworkMonitor
 {
@@ -27,7 +29,6 @@ namespace NetworkMonitor
         private DispatcherTimer _timer;
         public ICommand UpdateAlertStatusCommand { get; }
         public RelayCommand<object> SearchAlertsByIpCommand { get; }
-
 
         private Process _snortProcess;
         private SnortManagerService _snortManagerService;
@@ -45,8 +46,6 @@ namespace NetworkMonitor
                 OnPropertyChanged(nameof(CurrentUser));
             }
         }
-
-
 
         private object _currentView;
         public object CurrentView
@@ -101,11 +100,7 @@ namespace NetworkMonitor
             }
         }
 
-
-
-
         private ObservableCollection<AlertGroupViewModel> _alertGroupViewModels = new ObservableCollection<AlertGroupViewModel>();
-
         public ObservableCollection<AlertGroupViewModel> AlertGroupViewModels
         {
             get => _alertGroupViewModels;
@@ -113,6 +108,18 @@ namespace NetworkMonitor
             {
                 _alertGroupViewModels = value;
                 OnPropertyChanged(nameof(AlertGroupViewModels));
+            }
+        }
+
+        private string _selectedStatusFilter = "new"; 
+        public string SelectedStatusFilter
+        {
+            get => _selectedStatusFilter;
+            set
+            {
+                _selectedStatusFilter = value;
+                OnPropertyChanged(nameof(SelectedStatusFilter));
+                LoadAlerts(); 
             }
         }
 
@@ -126,6 +133,7 @@ namespace NetworkMonitor
             CurrentUser = new User { Role = "Guest", Username = "Niezalogowany" };
 
             SearchAlertsByIpCommand = new RelayCommand<object>(_ => SearchAlertsByIp());
+            UpdateAlertStatusCommand = new RelayCommand<int>(async (alertId) => await UpdateAlertStatus(alertId, "resolved"));
 
 
             if (!IsConfigurationValid())
@@ -141,7 +149,6 @@ namespace NetworkMonitor
 
             InitializeSnortAndMonitoring();
 
-            UpdateAlertStatusCommand = new RelayCommand<int>(async (alertId) => await UpdateAlertStatus(alertId, "resolved"));
             SelectedTabIndex = 0;
 
             LoadAlerts();
@@ -178,8 +185,6 @@ namespace NetworkMonitor
                 MessageBox.Show($"Błąd podczas uruchamiania Snort: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
-
-        //Ładowanie alertów bez tych z wykluczonym SID-em
         public async void LoadAlerts()
         {
             if (_isSearching || _alertRepository == null)
@@ -190,7 +195,7 @@ namespace NetworkMonitor
 
             try
             {
-                // Pobranie wszystkich alertów
+                // Pobranie wszystkich alertów z repozytorium
                 List<Alert> alerts = CurrentUser.Role switch
                 {
                     "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
@@ -198,7 +203,13 @@ namespace NetworkMonitor
                     _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
                 };
 
-                // Załaduj listę ignorowanych SID-ów z threshold.conf
+                // Filtruj alerty na podstawie wybranego statusu
+                if (!string.IsNullOrEmpty(SelectedStatusFilter) && SelectedStatusFilter != "all")
+                {
+                    alerts = alerts.Where(alert => alert.Status == SelectedStatusFilter).ToList();
+                }
+
+                // Załaduj listę ignorowanych SID-ów z threshold.conf (jeśli dotyczy)
                 var ignoredSids = ThresholdConfigManager.LoadRules()
                                                        .Where(rule => rule.TimeLimitSeconds == 0) // suppress rules
                                                        .Select(rule => rule.Sid)
@@ -207,6 +218,7 @@ namespace NetworkMonitor
                 // Filtruj alerty - usuń z listy alerty ignorowane na podstawie SID
                 alerts = alerts.Where(alert => !ignoredSids.Contains(alert.SignatureId.ToString())).ToList();
 
+                // Grupa i wyświetlenie alertów
                 GroupAndDisplayAlerts(alerts);
             }
             catch (Exception ex)
@@ -214,6 +226,8 @@ namespace NetworkMonitor
                 Console.WriteLine($"Błąd podczas ładowania alertów: {ex.Message}");
             }
         }
+
+
 
         //Ładowanie wszystkich alertów
         //public async void LoadAlerts()
@@ -287,6 +301,44 @@ namespace NetworkMonitor
             }
         }
 
+        private async Task UpdateAlertStatus(int alertId, string newStatus)
+        {
+            try
+            {
+                using var httpClient = new HttpClient { BaseAddress = new Uri(ConfigurationManager.GetSetting("ApiAddress")) };
+                var response = await httpClient.PutAsJsonAsync($"/api/alerts/{alertId}/status", newStatus);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Zaktualizowano status alertu o ID {alertId} na {newStatus}");
+
+                    // Usuń alert z listy, jeśli status zmieniono na "resolved"
+                    foreach (var group in AlertGroupViewModels.ToList())
+                    {
+                        var alertToRemove = group.Alerts.FirstOrDefault(a => a.Id == alertId);
+                        if (alertToRemove != null)
+                        {
+                            group.Alerts.Remove(alertToRemove);
+
+                            // Usuń grupę, jeśli nie ma w niej alertów
+                            if (!group.Alerts.Any())
+                            {
+                                AlertGroupViewModels.Remove(group);
+                            }
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"Błąd aktualizacji alertu: {response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas aktualizacji alertu: {ex.Message}");
+            }
+        }
 
 
         private void SortGroupsByLatestAlert()
@@ -335,24 +387,6 @@ namespace NetworkMonitor
                 }
             }
         }
-
-        public async Task UpdateAlertStatus(int alertId, string newStatus)
-        {
-            try
-            {
-                await _alertRepository.UpdateAlertStatusAsync(alertId, newStatus);
-                Console.WriteLine($"Zaktualizowano status alertu o ID {alertId} na {newStatus}");
-
-                LoadAlerts();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Błąd podczas aktualizacji alertu: {ex.Message}");
-                MessageBox.Show($"Błąd podczas aktualizacji alertu: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
-
-
 
         private void StartSnortAndMonitorLogs()
         {
@@ -507,6 +541,20 @@ namespace NetworkMonitor
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public class StatusToEnabledConverter : IValueConverter
+        {
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                string status = value as string;
+                return status != "resolved"; 
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

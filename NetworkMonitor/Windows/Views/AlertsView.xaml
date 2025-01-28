@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:NetworkMonitor.Windows"
+             xmlns:converters="clr-namespace:NetworkMonitor.Converters"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
@@ -21,6 +22,13 @@
             <TextBox Width="200" HorizontalAlignment="Left" VerticalAlignment="Center" 
                      Text="{Binding SearchSourceIp, UpdateSourceTrigger=PropertyChanged}" />
             <Button Content="Szukaj" Margin="10,0,0,0" Command="{Binding SearchAlertsByIpCommand}" />
+
+            <!-- Filtr statusu -->
+            <ComboBox Width="150" Margin="10,0,0,0" SelectedItem="{Binding SelectedStatusFilter}">
+                <ComboBoxItem Content="Wszystkie" Tag="all" />
+                <ComboBoxItem Content="Nowe" Tag="new" />
+                <ComboBoxItem Content="Rozwiązane" Tag="resolved" />
+            </ComboBox>
         </StackPanel>
 
         <!-- Tabela z alertami -->
@@ -45,6 +53,17 @@
                                     <DataGridTextColumn Header="Source IP" Binding="{Binding SourceIp}" Width="150" />
                                     <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
                                     <DataGridTextColumn Header="Sid" Binding="{Binding SignatureId}" Width="50"/>
+                                    <DataGridTemplateColumn Header="Akcje" Width="150">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="Oznacz jako rozwiązany"
+                                                    Command="{Binding DataContext.UpdateAlertStatusCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding Id}"
+                                                    HorizontalAlignment="Center"
+                                                    IsEnabled="{Binding Status, Converter={StaticResource StatusToEnabledConverter}}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </ScrollViewer>

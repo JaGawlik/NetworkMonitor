@@ -54,7 +54,7 @@ namespace AlertApiServer.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetAlerts(string? ip = null, string? role = null, string? assignedIp = null)
+        public IActionResult GetAlerts(string? ip = null, string? role = null, string? assignedIp = null, string? status = "new")
         {
             try
             {
@@ -72,10 +72,14 @@ namespace AlertApiServer.Controllers
                 {
                     conditions.Add("destination_ip = @assignedIp");
                 }
+                if (!string.IsNullOrEmpty(status))
+                {
+                    conditions.Add("status = @status");
+                }
 
                 if (conditions.Any())
                 {
-                    query += " WHERE " + string.Join(" OR ", conditions);
+                    query += " WHERE " + string.Join(" AND ", conditions);
                 }
 
                 query += " ORDER BY timestamp DESC";
@@ -89,6 +93,10 @@ namespace AlertApiServer.Controllers
                 if (!string.IsNullOrEmpty(assignedIp))
                 {
                     cmd.Parameters.AddWithValue("assignedIp", assignedIp);
+                }
+                if (!string.IsNullOrEmpty(status))
+                {
+                    cmd.Parameters.AddWithValue("status", status);
                 }
 
                 using var reader = cmd.ExecuteReader();
@@ -120,6 +128,7 @@ namespace AlertApiServer.Controllers
                 return StatusCode(500, "Error fetching alerts.");
             }
         }
+
 
         [HttpPut("{id}/status")]
         public IActionResult UpdateAlertStatus(int id, [FromBody] string newStatus)
