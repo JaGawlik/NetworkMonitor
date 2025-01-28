@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Windows.Threading;
 using System.Net.Http.Json;
+using System.Net;
 
 internal class SnortAlertMonitor
 {
@@ -28,9 +29,9 @@ internal class SnortAlertMonitor
         }
 
         _regex = new Regex(
-             @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+:\d+)\]\s(?<message>.*?)\s\[\*\*\](\s\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[a-fA-F0-9\:\.]+):\d+\s->\s(?<dstip>[a-fA-F0-9\:\.]+):\d+",
-             RegexOptions.Compiled
-         );
+        @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+:\d+)\]\s(?<message>.*?)\s\[\*\*\](\s\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>\w+)\}\s(?<srcip>[a-fA-F0-9\:\.]+)(:\d+)?\s->\s(?<dstip>[a-fA-F0-9\:\.]+)(:\d+)?",
+        RegexOptions.Compiled
+    );
 
     }
 
@@ -76,6 +77,9 @@ internal class SnortAlertMonitor
             string srcIp = match.Groups["srcip"].Value;
             string dstIp = match.Groups["dstip"].Value;
 
+            string sidString = match.Groups["sid"].Value.Split(':')[1]; // Pobiera środkową wartość (np. "129:20:1" → "20")
+            int sid = int.TryParse(sidString, out int parsedSid) ? parsedSid : 0;
+
             int currentYear = DateTime.Now.Year;
 
             var parts = dateStr.Split('-');
@@ -99,8 +103,9 @@ internal class SnortAlertMonitor
                     SourceIp = srcIp,
                     DestinationIp = dstIp,
                     Protocol = protocol,
+                    SignatureId = sid,
                     Status = "new",
-                    SnortInstance = "Snort_PC_01"
+                    SnortInstance = Dns.GetHostName()
                 };
 
                 await SendAlertToApiAsync(alert);
@@ -162,43 +167,48 @@ internal class SnortAlertMonitor
         }
     }
 
-    public async Task<List<(string Sid, string Message, int Count)>> GetFrequentAlertsAsync(int topN = 10)
+    public async Task<List<(int Sid, string Message, int Count)>> GetFrequentAlertsAsync(int topN = 10)
     {
         using var httpClient = new HttpClient();
         try
         {
-            string requestUrl = $"{_apiUrl}/api/alerts/";
-            var response = await httpClient.GetAsync(requestUrl);
+            var requestUrl = $"{_apiUrl}/api/alerts";
+            var allAlerts = await httpClient.GetFromJsonAsync<List<Alert>>(requestUrl);
 
-            if (response.IsSuccessStatusCode)
+            if (allAlerts == null || !allAlerts.Any())
             {
-                string responseBody = await response.Content.ReadAsStringAsync();
-                var frequentAlerts = await response.Content.ReadFromJsonAsync<List<(string Sid, string Message, int Count)>>();
-                return frequentAlerts?.Take(topN).ToList() ?? new List<(string Sid, string Message, int Count)>();
+                Console.WriteLine("Nie pobrano żadnych alertów z API.");
+                return new List<(int Sid, string Message, int Count)>();
             }
-            else
+
+            var groupedAlerts = allAlerts
+                .GroupBy(alert => new { alert.SignatureId, alert.AlertMessage }) // Grupowanie po `Sid` i `AlertMessage`
+                .Select(group => new
+                {
+                    Sid = group.Key.SignatureId,
+                    Message = group.Key.AlertMessage,
+                    Count = group.Count()
+                })
+                .OrderByDescending(group => group.Count)
+                .Take(topN)
+                .Select(group => (group.Sid, group.Message, group.Count))
+                .ToList();
+
+            Console.WriteLine($"Liczba grupowanych alertów: {groupedAlerts.Count}");
+            foreach (var alert in groupedAlerts)
             {
-                Console.WriteLine($"Błąd podczas pobierania najczęstszych alertów: {response.StatusCode}");
-                return new List<(string Sid, string Message, int Count)>();
+                Console.WriteLine($"SID: {alert.Sid}, Wiadomość: {alert.Message}, Liczba wystąpień: {alert.Count}");
             }
+
+            return groupedAlerts;
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            Console.WriteLine($"Błąd podczas komunikacji z API: {ex.Message}");
-            return new List<(string Sid, string Message, int Count)>();
+            Console.WriteLine($"Błąd komunikacji z API: {ex.Message}");
+            return new List<(int Sid, string Message, int Count)>();
         }
     }
 
-
-    //public void DisplayFrequentAlerts(int topN = 10)
-    //{
-    //    var frequentAlerts = GetFrequentAlerts(topN);
-    //    Console.WriteLine("Najczęstsze alerty w logach Snorta:");
-    //    foreach (var alert in frequentAlerts)
-    //    {
-    //        Console.WriteLine($"SID: {alert.Sid}, Wiadomość: {alert.Message}, Liczba wystąpień: {alert.Count}");
-    //    }
-    //}
 
     private Dictionary<string, DateTime> _recentAlerts = new();
 

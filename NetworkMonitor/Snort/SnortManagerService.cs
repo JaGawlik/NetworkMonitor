@@ -92,8 +92,8 @@ namespace NetworkMonitor.Snort
                 bool started = snortProcess.Start();
                 if (started)
                 {
-                    snortProcess.BeginOutputReadLine(); // Włącz odczyt danych z stdout
-                    snortProcess.BeginErrorReadLine();  // Włącz odczyt danych z stderr
+                    snortProcess.BeginOutputReadLine(); 
+                    snortProcess.BeginErrorReadLine();  
                     Console.WriteLine("Snort został uruchomiony.");
                     return snortProcess;
                 }

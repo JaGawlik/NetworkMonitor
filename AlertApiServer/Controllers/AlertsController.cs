@@ -30,8 +30,8 @@ namespace AlertApiServer.Controllers
                 conn.Open();
 
                 string query = @"
-                INSERT INTO alerts (timestamp, alert_message, source_ip, destination_ip, protocol, status, snort_instance)
-                VALUES (@timestamp, @alertMessage, @sourceIp, @destinationIp, @protocol, @status, @snortInstance)";
+                INSERT INTO alerts (timestamp, alert_message, source_ip, destination_ip, protocol, status, snort_instance, signature_id)
+                VALUES (@timestamp, @alertMessage, @sourceIp, @destinationIp, @protocol, @status, @snortInstance, @signatureId)";
                 using var cmd = new NpgsqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("timestamp", alert.Timestamp);
                 cmd.Parameters.AddWithValue("alertMessage", alert.AlertMessage);
@@ -40,6 +40,7 @@ namespace AlertApiServer.Controllers
                 cmd.Parameters.AddWithValue("protocol", alert.Protocol);
                 cmd.Parameters.AddWithValue("status", alert.Status);
                 cmd.Parameters.AddWithValue("snortInstance", alert.SnortInstance);
+                cmd.Parameters.AddWithValue("signatureId", alert.SignatureId);
                 cmd.ExecuteNonQuery();
 
                 return Ok("Alert received and stored.");
@@ -102,7 +103,8 @@ namespace AlertApiServer.Controllers
                         DestinationIp = reader.GetString(reader.GetOrdinal("destination_ip")),
                         Protocol = reader.GetString(reader.GetOrdinal("protocol")),
                         Status = reader.GetString(reader.GetOrdinal("status")),
-                        SnortInstance = reader.GetString(reader.GetOrdinal("snort_instance"))
+                        SnortInstance = reader.GetString(reader.GetOrdinal("snort_instance")),
+                        SignatureId = reader.GetInt32(reader.GetOrdinal("signature_id"))
                     });
                 }
 

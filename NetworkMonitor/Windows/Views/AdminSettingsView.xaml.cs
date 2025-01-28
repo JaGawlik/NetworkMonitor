@@ -9,17 +9,28 @@ namespace NetworkMonitor.Windows.Views
         public AdminSettingsView()
         {
             InitializeComponent();
-            var viewModel = new AdminSettingsViewModel();
-            DataContext = viewModel;
 
-            Loaded += async (_, _) => await viewModel.LoadFrequentAlertsAsync();
+            Loaded += async (_, _) =>
+            {
+                Console.WriteLine("Ładowanie najczęstszych alertów...");
+
+                if (DataContext is AdminSettingsViewModel viewModel)
+                {
+                    await viewModel.LoadFrequentAlertsAsync();
+                    Console.WriteLine("Najczęstsze alerty załadowane.");
+                }
+                else
+                {
+                    Console.WriteLine("DataContext nie jest typu AdminSettingsViewModel.");
+                }
+            };
         }
 
         private void SaveChangesButton_Click(object sender, RoutedEventArgs e)
         {
             if (DataContext is AdminSettingsViewModel viewModel)
             {
-                // Dodaj tutaj logikę zapisywania reguł
+                viewModel.SaveRules();
                 MessageBox.Show("Reguły zostały zapisane.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
@@ -28,18 +39,9 @@ namespace NetworkMonitor.Windows.Views
         {
             if (DataContext is AdminSettingsViewModel viewModel && viewModel.SelectedFrequentAlert != null)
             {
-                var selectedAlert = viewModel.SelectedFrequentAlert;
-                // Dodaj regułę na podstawie zaznaczonego alertu
-                string sid = selectedAlert.Sid;
-                string srcIp = ""; // Dodaj logikę ustawienia IP
-                int limit = 60; // Domyślny limit czasu
-
-                // Wyświetl informację dla użytkownika
-                MessageBox.Show($"Dodano regułę: SID={sid}, IP={srcIp}, Limit={limit}s", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
-            {
-                MessageBox.Show("Nie wybrano alertu.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
+                var alert = viewModel.SelectedFrequentAlert;
+                viewModel.AddRule(alert.Sid, "", 60);
+                MessageBox.Show($"Dodano regułę: SID={alert.Sid}", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
     }

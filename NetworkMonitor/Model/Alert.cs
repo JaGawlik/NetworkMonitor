@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace NetworkMonitor.Model
@@ -14,7 +15,10 @@ namespace NetworkMonitor.Model
         public string SourceIp { get; set; }
         public string DestinationIp { get; set; }
         public string Protocol { get; set; }
+
+        public int SignatureId { get; set; }
         public string Status { get; set; }
         public string SnortInstance { get; set; }
+
     }
 }

@@ -185,7 +185,8 @@ namespace NetworkMonitor.Database
                         destination_ip VARCHAR(45),
                         protocol VARCHAR(10),
                         status VARCHAR(20) DEFAULT 'new',
-                        snort_instance VARCHAR(100)
+                        snort_instance VARCHAR(100),
+                        signature_id INT NOT NULL DEFAULT 0
                     );";
 
                 string createUsersTable = @"
