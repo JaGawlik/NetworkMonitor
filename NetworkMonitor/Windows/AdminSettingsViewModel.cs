@@ -1,51 +1,42 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using NetworkMonitor.Model;
 
 namespace NetworkMonitor.Windows
 {
-    public class AdminSettingsViewModel
+    public class AdminSettingsViewModel : INotifyPropertyChanged
     {
-        // Kolekcja reguł
-        public ObservableCollection<AlertFilterRule> Rules { get; set; } = new ObservableCollection<AlertFilterRule>();
-
         // Kolekcja najczęstszych alertów
         public ObservableCollection<FrequentAlert> FrequentAlerts { get; set; } = new ObservableCollection<FrequentAlert>();
 
-        // Dodaj regułę
-        public void AddRule(string sid, string srcIp, int limit)
+        private FrequentAlert _selectedFrequentAlert;
+        public FrequentAlert SelectedFrequentAlert
         {
-            if (string.IsNullOrEmpty(sid) || string.IsNullOrEmpty(srcIp) || limit <= 0)
+            get => _selectedFrequentAlert;
+            set
             {
-                MessageBox.Show("Wszystkie pola muszą być poprawnie wypełnione.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                _selectedFrequentAlert = value;
+                Console.WriteLine($"SelectedFrequentAlert zmieniony na: {value?.Sid}"); // Debug
+                OnPropertyChanged();
             }
-
-            var rule = new AlertFilterRule
-            {
-                Sid = sid,
-                SourceIp = srcIp,
-                TimeLimitSeconds = limit
-            };
-
-            Rules.Add(rule);
         }
 
-        // Zapisz reguły
-        public void SaveRules()
+        public AdminSettingsViewModel()
         {
-            // Zapisz reguły do konfiguracji lub pliku
-            MessageBox.Show("Reguły zostały zapisane.", "Informacja", MessageBoxButton.OK, MessageBoxImage.Information);
+            FrequentAlerts = new ObservableCollection<FrequentAlert>();
         }
 
         // Załaduj najczęstsze alerty
-        public void LoadFrequentAlerts()
+        public async Task LoadFrequentAlertsAsync()
         {
-            var snortAlertMonitor = new SnortAlertMonitor(Application.Current.Dispatcher);
-            var frequentAlerts = snortAlertMonitor.GetFrequentAlerts();
+            var snortAlertMonitor = new SnortAlertMonitor(System.Windows.Application.Current.Dispatcher);
+            var alerts = await snortAlertMonitor.GetFrequentAlertsAsync();
 
             FrequentAlerts.Clear();
-            foreach (var alert in frequentAlerts)
+            foreach (var alert in alerts)
             {
                 FrequentAlerts.Add(new FrequentAlert
                 {
@@ -54,14 +45,15 @@ namespace NetworkMonitor.Windows
                     Count = alert.Count
                 });
             }
-        }
-    }
 
-    public class AlertFilterRule
-    {
-        public string Sid { get; set; }
-        public string SourceIp { get; set; }
-        public int TimeLimitSeconds { get; set; }
+            Console.WriteLine($"FrequentAlerts Count: {FrequentAlerts.Count}");
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     public class FrequentAlert

@@ -3,28 +3,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:NetworkMonitor.Windows.Views"
+             xmlns:windows="clr-namespace:NetworkMonitor.Windows" 
              mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=windows:AdminSettingsViewModel}" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
-        <StackPanel>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
         <!-- Lista najczęstszych alertów -->
-        <TextBlock Text="Najczęstsze alerty:" FontWeight="Bold" Margin="0,10,0,5" />
-        <ListView x:Name="FrequentAlertsList" SelectionMode="Single" Margin="0,0,0,10">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="SID" DisplayMemberBinding="{Binding Sid}" Width="100" />
-                    <GridViewColumn Header="Wiadomość" DisplayMemberBinding="{Binding Message}" Width="300" />
-                    <GridViewColumn Header="Ilość" DisplayMemberBinding="{Binding Count}" Width="100" />
-                </GridView>
-            </ListView.View>
-        </ListView>
+        <ListBox x:Name="FrequentAlertsList" Grid.Row="0" 
+                 ItemsSource="{Binding FrequentAlerts}" 
+                 SelectedItem="{Binding SelectedFrequentAlert}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="SID: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Sid}" Margin="5,0"/>
+                        <TextBlock Text=" | Wiadomość: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Message}" Margin="5,0"/>
+                        <TextBlock Text=" | Liczba wystąpień: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Count}" Margin="5,0"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
-        <!-- Dodawanie reguły z wybranej pozycji -->
-        <Button Content="Dodaj regułę" Click="AddSelectedAlertRule_Click" HorizontalAlignment="Left" />
-
-        <!-- Zapis zmian -->
-        <Button Content="Zapisz zmiany" Click="SaveChangesButton_Click" HorizontalAlignment="Left" Margin="0,10,0,0" />
+        <!-- Przyciski akcji -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10">
+            <Button Content="Dodaj regułę" Click="AddSelectedAlertRule_Click" Margin="0,0,10,0"/>
+            <Button Content="Zapisz zmiany" Click="SaveChangesButton_Click"/>
         </StackPanel>
     </Grid>
 </UserControl>

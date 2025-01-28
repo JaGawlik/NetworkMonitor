@@ -162,49 +162,43 @@ internal class SnortAlertMonitor
         }
     }
 
-    public List<(string Sid, string Message, int Count)> GetFrequentAlerts(int topN = 10)
+    public async Task<List<(string Sid, string Message, int Count)>> GetFrequentAlertsAsync(int topN = 10)
     {
-        if (!File.Exists(_snortLogPath))
+        using var httpClient = new HttpClient();
+        try
         {
-            Console.WriteLine($"Plik logów Snorta nie istnieje: {_snortLogPath}");
+            string requestUrl = $"{_apiUrl}/api/alerts/";
+            var response = await httpClient.GetAsync(requestUrl);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string responseBody = await response.Content.ReadAsStringAsync();
+                var frequentAlerts = await response.Content.ReadFromJsonAsync<List<(string Sid, string Message, int Count)>>();
+                return frequentAlerts?.Take(topN).ToList() ?? new List<(string Sid, string Message, int Count)>();
+            }
+            else
+            {
+                Console.WriteLine($"Błąd podczas pobierania najczęstszych alertów: {response.StatusCode}");
+                return new List<(string Sid, string Message, int Count)>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Błąd podczas komunikacji z API: {ex.Message}");
             return new List<(string Sid, string Message, int Count)>();
         }
-
-        var alertCounts = new Dictionary<string, (string Message, int Count)>();
-
-        foreach (var line in File.ReadLines(_snortLogPath))
-        {
-            // Przykład logu: [**] [1:12345:1] Alert Message [**]
-            var match = _regex.Match(line);
-            if (!match.Success) continue;
-
-            string sid = match.Groups["sid"].Value; // Możesz dostosować grupy w regex
-            string message = match.Groups["message"].Value;
-
-            if (!alertCounts.ContainsKey(sid))
-            {
-                alertCounts[sid] = (message, 0);
-            }
-
-            alertCounts[sid] = (alertCounts[sid].Message, alertCounts[sid].Count + 1);
-        }
-
-        return alertCounts
-            .OrderByDescending(kvp => kvp.Value.Count)
-            .Take(topN)
-            .Select(kvp => (Sid: kvp.Key, Message: kvp.Value.Message, Count: kvp.Value.Count))
-            .ToList();
     }
 
-    public void DisplayFrequentAlerts(int topN = 10)
-    {
-        var frequentAlerts = GetFrequentAlerts(topN);
-        Console.WriteLine("Najczęstsze alerty w logach Snorta:");
-        foreach (var alert in frequentAlerts)
-        {
-            Console.WriteLine($"SID: {alert.Sid}, Wiadomość: {alert.Message}, Liczba wystąpień: {alert.Count}");
-        }
-    }
+
+    //public void DisplayFrequentAlerts(int topN = 10)
+    //{
+    //    var frequentAlerts = GetFrequentAlerts(topN);
+    //    Console.WriteLine("Najczęstsze alerty w logach Snorta:");
+    //    foreach (var alert in frequentAlerts)
+    //    {
+    //        Console.WriteLine($"SID: {alert.Sid}, Wiadomość: {alert.Message}, Liczba wystąpień: {alert.Count}");
+    //    }
+    //}
 
     private Dictionary<string, DateTime> _recentAlerts = new();
 
