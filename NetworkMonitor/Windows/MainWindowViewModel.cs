@@ -17,6 +17,7 @@ using NetworkMonitor.Repository;
 using NetworkMonitor.Snort;
 using NetworkMonitor.Windows;
 using NetworkMonitor.Windows.Views;
+using NetworkMonitor.Utilities;
 
 namespace NetworkMonitor
 {
@@ -178,8 +179,7 @@ namespace NetworkMonitor
             }
         }
 
-
-
+        //Ładowanie alertów bez tych z wykluczonym SID-em
         public async void LoadAlerts()
         {
             if (_isSearching || _alertRepository == null)
@@ -190,12 +190,22 @@ namespace NetworkMonitor
 
             try
             {
+                // Pobranie wszystkich alertów
                 List<Alert> alerts = CurrentUser.Role switch
                 {
                     "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
                     "Administrator" => await _alertRepository.GetAlertsAsync(),
                     _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
                 };
+
+                // Załaduj listę ignorowanych SID-ów z threshold.conf
+                var ignoredSids = ThresholdConfigManager.LoadRules()
+                                                       .Where(rule => rule.TimeLimitSeconds == 0) // suppress rules
+                                                       .Select(rule => rule.Sid)
+                                                       .ToHashSet();
+
+                // Filtruj alerty - usuń z listy alerty ignorowane na podstawie SID
+                alerts = alerts.Where(alert => !ignoredSids.Contains(alert.SignatureId.ToString())).ToList();
 
                 GroupAndDisplayAlerts(alerts);
             }
@@ -204,6 +214,32 @@ namespace NetworkMonitor
                 Console.WriteLine($"Błąd podczas ładowania alertów: {ex.Message}");
             }
         }
+
+        //Ładowanie wszystkich alertów
+        //public async void LoadAlerts()
+        //{
+        //    if (_isSearching || _alertRepository == null)
+        //    {
+        //        Console.WriteLine("Nie można załadować alertów, ponieważ `_alertRepository` jest null lub trwa wyszukiwanie.");
+        //        return;
+        //    }
+
+        //    try
+        //    {
+        //        List<Alert> alerts = CurrentUser.Role switch
+        //        {
+        //            "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
+        //            "Administrator" => await _alertRepository.GetAlertsAsync(),
+        //            _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
+        //        };
+
+        //        GroupAndDisplayAlerts(alerts);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Błąd podczas ładowania alertów: {ex.Message}");
+        //    }
+        //}
 
 
         private void GroupAndDisplayAlerts(List<Alert> alerts)
