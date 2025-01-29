@@ -28,12 +28,18 @@ internal class SnortAlertMonitor
             return;
         }
 
+        //_regex = new Regex(
+        //    @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
+        //    @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
+        //    @"(?<srcip>[0-9a-fA-F:.]+)(?::(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+)(?::(?<dstport>\d+))?",
+        //    RegexOptions.Compiled
+        //); 
         _regex = new Regex(
             @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
             @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
-            @"(?<srcip>[0-9a-fA-F:.]+)(?::(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+)(?::(?<dstport>\d+))?",
+            @"(?<srcip>[0-9a-fA-F:.]+?)(?::(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+?)(?::(?<dstport>\d+))?",
             RegexOptions.Compiled
-        ); 
+        );
     }
 
     public async Task StartMonitoringAsync()

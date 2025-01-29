@@ -40,7 +40,7 @@ namespace NetworkMonitor.Snort
             int? selectedIndex = ConfigurationManager.Settings.SelectedDevice?.Index;
             string arguments = $"-i {selectedIndex} -c {snortConfPath} -l {snortLogPath} -A fast -N";
 
-            Console.WriteLine($"Snort uruchamiany z argumentami: {arguments}");
+            
 
             if (selectedIndex == null || string.IsNullOrEmpty(snortInstallationPath) || !File.Exists(snortPath))
             {
@@ -49,6 +49,7 @@ namespace NetworkMonitor.Snort
             }
 
             _snortProcess = StartSnortProcess(snortPath, arguments);
+            Console.WriteLine($"Snort uruchamiany z argumentami: {arguments}");
             _isRunning = _snortProcess != null;
 
             return _snortProcess;
