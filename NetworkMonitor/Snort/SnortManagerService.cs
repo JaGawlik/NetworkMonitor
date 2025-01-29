@@ -23,12 +23,12 @@ namespace NetworkMonitor.Snort
             }
 
             string snortInstallationPath = ConfigurationManager.GetSetting("SnortInstallationPath");
-            string snortLogPath = Path.Combine(snortInstallationPath, "log", "alert.ids");
+            string snortLogPath = Path.Combine(snortInstallationPath, "log");
             string snortPath = Path.Combine(snortInstallationPath, "bin", "snort.exe");
             string snortConfPath = Path.Combine(snortInstallationPath, "etc", "snort.conf");
             int? selectedIndex = ConfigurationManager.Settings.SelectedDevice?.Index;
             //string arguments = $"-i {selectedIndex} -c {Path.Combine(snortInstallationPath, "etc", "snort.conf")} -l {Path.Combine(snortInstallationPath, "log")} -A fast -N";
-            string arguments = $"{selectedIndex} -c \"{snortConfPath}\" -l \"{snortLogPath}\" -A fast -N";
+            string arguments = $"-i {selectedIndex} -c {snortConfPath} -l {snortLogPath} -A fast -N";
             string apiUrl = ConfigurationManager.GetSetting("ApiAddress");
 
             Console.WriteLine($"Snort uruchamiany z argumentami: {arguments}");
