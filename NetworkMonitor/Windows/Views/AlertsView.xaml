@@ -52,8 +52,8 @@
                                     <DataGridTextColumn Header="Destination Port" Binding="{Binding DestinationPort}" Width="100" />
                                     <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="100" />
                                     <DataGridTextColumn Header="Source IP" Binding="{Binding SourceIp}" Width="150" />
-                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
-                                    <DataGridTextColumn Header="Sid" Binding="{Binding SignatureId}" Width="50"/>
+                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="50" />
+                                    <DataGridTextColumn Header="Sid" Binding="{Binding SignatureId}" Width="60"/>
                                     <DataGridTemplateColumn Header="Akcje" Width="150">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>

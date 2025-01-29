@@ -33,8 +33,7 @@ internal class SnortAlertMonitor
             @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
             @"(?<srcip>[0-9a-fA-F:.]+)(?::(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+)(?::(?<dstport>\d+))?",
             RegexOptions.Compiled
-        );
-
+        ); 
     }
 
     public async Task StartMonitoringAsync()
@@ -91,12 +90,6 @@ internal class SnortAlertMonitor
                 return;
             }
 
-            //if (string.IsNullOrEmpty(srcIp) || string.IsNullOrEmpty(dstIp) || sid == 0)
-            //{
-            //    Console.WriteLine($"❌ Pominięto alert: Nieprawidłowe dane: srcIp={srcIp}, dstIp={dstIp}, sid={sid}");
-            //    return;
-            //}
-
             int currentYear = DateTime.Now.Year;
 
             var parts = dateStr.Split('-');
@@ -133,15 +126,16 @@ internal class SnortAlertMonitor
             }
         }
     }
-    
+
     private (string ip, int? port) ExtractIpAndPort(string ipWithPort)
     {
         if (string.IsNullOrWhiteSpace(ipWithPort))
             return (null, null);
 
+        //Obsługa IPv6 w nawiasach np. [fe80::1]:443
         if (ipWithPort.Contains('['))
         {
-            var match = Regex.Match(ipWithPort, @"\[(?<ip>.+)\](:(?<port>\d+))?");
+            var match = Regex.Match(ipWithPort, @"\[(?<ip>[0-9a-fA-F:.]+)\](:(?<port>\d+))?");
             if (match.Success)
             {
                 string ip = match.Groups["ip"].Value;
@@ -149,60 +143,21 @@ internal class SnortAlertMonitor
                 return (ip, port);
             }
         }
-        else // Obsługa IPv4 lub IPv6 bez nawiasów
+        else
         {
-            var parts = ipWithPort.Split(':');
-            string ip = string.Join(":", parts.Take(parts.Length - 1)); // Adres IPv6 zawiera dwukropki
-            int? port = int.TryParse(parts.Last(), out int parsedPort) ? parsedPort : null;
-            return (ip, port);
+            //Obsługa IPv4 i IPv6 bez nawiasów np. 8.8.8.8:443 lub fe80::1
+            var match = Regex.Match(ipWithPort, @"^(?<ip>[0-9a-fA-F:.]+)(?::(?<port>\d+))?$");
+            if (match.Success)
+            {
+                string ip = match.Groups["ip"].Value;
+                int? port = match.Groups["port"].Success ? int.Parse(match.Groups["port"].Value) : null;
+                return (ip, port);
+            }
         }
 
+        //Jeśli nie ma portu, zwracamy IP bez zmian
         return (ipWithPort, null);
     }
-
-    //string sidString = match.Groups["sid"].Value.Split(':')[1]; // Pobiera środkową wartość (np. "129:20:1" → "20")
-    //int sid = int.TryParse(sidString, out int parsedSid) ? parsedSid : 0;
-
-    //private (string ip, int? port) ExtractIpAndPort(string ipWithPort)
-    //{
-    //    if (string.IsNullOrWhiteSpace(ipWithPort))
-    //        return (null, null);
-
-    //    if (ipWithPort.Contains('[')) // Obsługa IPv6 w formacie [::1]:8080
-    //    {
-    //        var match = Regex.Match(ipWithPort, @"\[(?<ip>.+)\](:(?<port>\d+))?");
-    //        if (match.Success)
-    //        {
-    //            string ip = match.Groups["ip"].Value;
-    //            int? port = match.Groups["port"].Success ? int.Parse(match.Groups["port"].Value) : null;
-    //            return (ip, port);
-    //        }
-    //    }
-    //    else // Obsługa IPv4 lub IPv6 bez nawiasów
-    //    {
-    //        var parts = ipWithPort.Split(':');
-    //        string ip = string.Join(":", parts.Take(parts.Length - 1)); // Adres IPv6 zawiera dwukropki
-    //        int? port = int.TryParse(parts.Last(), out int parsedPort) ? parsedPort : null;
-    //        return (ip, port);
-    //    }
-
-    //    return (ipWithPort, null);
-    //}
-    //private (string ip, int? port) ExtractIpAndPort(string ipWithPort)
-    //{
-    //    if (string.IsNullOrWhiteSpace(ipWithPort))
-    //        return (null, null);
-
-    //    var match = Regex.Match(ipWithPort, @"(?<ip>[0-9a-fA-F:.]+)(:(?<port>\d+))?");
-    //    if (match.Success)
-    //    {
-    //        string ip = match.Groups["ip"].Value;
-    //        int? port = match.Groups["port"].Success ? int.Parse(match.Groups["port"].Value) : null;
-    //        return (ip, port);
-    //    }
-
-    //    return (ipWithPort, null);
-    //}
 
 
 
