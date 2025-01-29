@@ -80,29 +80,17 @@ namespace NetworkMonitor
                 StartProgram(role);
             }
         }    
-
-        private Process _snortProcess;
         protected override void OnExit(ExitEventArgs e)
         {
             base.OnExit(e);
 
-            if (_snortProcess != null && !_snortProcess.HasExited)
-            {
-                try
-                {
-                    _snortProcess.Kill();
-                    _snortProcess.WaitForExit();
-                    Console.WriteLine("Snort został zatrzymany.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Wystąpił błąd podczas zatrzymywania Snorta: {ex.Message}");
-                }
-            }
+            SnortManagerService.Instance.StopSnort();
+            Console.WriteLine("Snort został zatrzymany.");
         }
 
         private void StartProgram(string role)
         {
+            SnortManagerService.Instance.StartSnort();
             var mainWindow = new MainWindow(new User { Role = role });
             MainWindow = mainWindow;
             mainWindow.Show();

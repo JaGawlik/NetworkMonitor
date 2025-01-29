@@ -374,11 +374,17 @@ namespace NetworkMonitor
             }
         }
 
-        private void StartSnortAndMonitorLogs() //Starwowanie snorta
+        private void StartSnortAndMonitorLogs()
         {
             try
             {
-                _snortProcess = _snortManagerService.StartSnort();
+                if (SnortManagerService.Instance.IsSnortRunning)
+                {
+                    Console.WriteLine("Snort jest już uruchomiony.");
+                    return;
+                }
+
+                _snortProcess = SnortManagerService.Instance.StartSnort();
 
                 if (_snortProcess == null)
                 {
@@ -393,7 +399,6 @@ namespace NetworkMonitor
             catch (Exception ex)
             {
                 Console.WriteLine($"Błąd podczas uruchamiania Snorta: {ex.Message}");
-
             }
         }
 
