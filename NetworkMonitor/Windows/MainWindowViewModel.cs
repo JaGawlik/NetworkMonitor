@@ -374,7 +374,7 @@ namespace NetworkMonitor
             }
         }
 
-        private void StartSnortAndMonitorLogs()
+        private void StartSnortAndMonitorLogs() //Starwowanie snorta
         {
             try
             {
@@ -393,6 +393,7 @@ namespace NetworkMonitor
             catch (Exception ex)
             {
                 Console.WriteLine($"Błąd podczas uruchamiania Snorta: {ex.Message}");
+
             }
         }
 
