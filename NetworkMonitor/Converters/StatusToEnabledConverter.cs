@@ -13,12 +13,14 @@ namespace NetworkMonitor.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             string status = value as string;
-            return status != "resolved"; // Przycisk aktywny tylko dla alertów o statusie innym niż "resolved"
+            return !string.Equals(status, "resolved", StringComparison.OrdinalIgnoreCase);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
         }
+
+
     }
 }

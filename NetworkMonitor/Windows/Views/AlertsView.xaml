@@ -24,11 +24,12 @@
             <Button Content="Szukaj" Margin="10,0,0,0" Command="{Binding SearchAlertsByIpCommand}" />
 
             <!-- Filtr statusu -->
-            <ComboBox Width="150" Margin="10,0,0,0" SelectedItem="{Binding SelectedStatusFilter}">
-                <ComboBoxItem Content="Wszystkie" Tag="all" />
-                <ComboBoxItem Content="Nowe" Tag="new" />
-                <ComboBoxItem Content="Rozwiązane" Tag="resolved" />
-            </ComboBox>
+            <!--<ComboBox Width="150" Margin="10,0,0,0" SelectedItem="{Binding SelectedStatusFilter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <ComboBoxItem Tag="all">Wszystkie</ComboBoxItem>
+                <ComboBoxItem Tag="new">Nowe</ComboBoxItem>
+                <ComboBoxItem Tag="resolved">Rozwiązane</ComboBoxItem>
+            </ComboBox>-->
+
         </StackPanel>
 
         <!-- Tabela z alertami -->

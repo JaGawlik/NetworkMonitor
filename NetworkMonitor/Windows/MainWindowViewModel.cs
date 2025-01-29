@@ -111,20 +111,6 @@ namespace NetworkMonitor
             }
         }
 
-        private string _selectedStatusFilter = "new"; 
-        public string SelectedStatusFilter
-        {
-            get => _selectedStatusFilter;
-            set
-            {
-                _selectedStatusFilter = value;
-                OnPropertyChanged(nameof(SelectedStatusFilter));
-                LoadAlerts(); 
-            }
-        }
-
-        public ObservableCollection<AlertGroupViewModel> AlertGroups { get; set; } = new ObservableCollection<AlertGroupViewModel>();
-
         private string _localIp = ConfigurationManager.GetLocalIpAddress();
         private bool _isSearching = false;
         private readonly AlertRepository _alertRepository;
@@ -195,7 +181,6 @@ namespace NetworkMonitor
 
             try
             {
-                // Pobranie wszystkich alertów z repozytorium
                 List<Alert> alerts = CurrentUser.Role switch
                 {
                     "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
@@ -203,12 +188,7 @@ namespace NetworkMonitor
                     _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
                 };
 
-                // Filtruj alerty na podstawie wybranego statusu
-                if (!string.IsNullOrEmpty(SelectedStatusFilter) && SelectedStatusFilter != "all")
-                {
-                    alerts = alerts.Where(alert => alert.Status == SelectedStatusFilter).ToList();
-                }
-
+                Console.WriteLine($"Ładowanie wszystkich alertów, bez filtrowania statusu.");
                 // Załaduj listę ignorowanych SID-ów z threshold.conf (jeśli dotyczy)
                 var ignoredSids = ThresholdConfigManager.LoadRules()
                                                        .Where(rule => rule.TimeLimitSeconds == 0) // suppress rules
@@ -218,15 +198,21 @@ namespace NetworkMonitor
                 // Filtruj alerty - usuń z listy alerty ignorowane na podstawie SID
                 alerts = alerts.Where(alert => !ignoredSids.Contains(alert.SignatureId.ToString())).ToList();
 
+                Console.WriteLine($"Po usunięciu ignorowanych SID-ów: {alerts.Count} alertów");
+                //TUTAJ
+
                 // Grupa i wyświetlenie alertów
+                AlertGroupViewModels.Clear();
                 GroupAndDisplayAlerts(alerts);
+
+                // Powiadomienie widoku o zmianach
+                OnPropertyChanged(nameof(AlertGroupViewModels));
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Błąd podczas ładowania alertów: {ex.Message}");
             }
         }
-
 
 
         //Ładowanie wszystkich alertów
@@ -556,5 +542,72 @@ namespace NetworkMonitor
                 throw new NotImplementedException();
             }
         }
+
+        //FILTR STATUSÓW
+        //private string _selectedStatusFilter = "all";
+        //public string SelectedStatusFilter
+        //{
+        //    get => _selectedStatusFilter;
+        //    set
+        //    {
+        //        if (_selectedStatusFilter != value)
+        //        {
+        //            _selectedStatusFilter = value;
+        //            Console.WriteLine($"SelectedStatusFilter ustawiony na: {_selectedStatusFilter}");
+        //            OnPropertyChanged(nameof(SelectedStatusFilter));
+        //            LoadAlerts();
+        //        }
+        //    }
+        //}
+
+        //public async void LoadAlerts()
+        //{
+        //    if (_isSearching || _alertRepository == null)
+        //    {
+        //        Console.WriteLine("Nie można załadować alertów, ponieważ `_alertRepository` jest null lub trwa wyszukiwanie.");
+        //        return;
+        //    }
+
+        //    try
+        //    {
+        //        List<Alert> alerts = CurrentUser.Role switch
+        //        {
+        //            "Guest" => await _alertRepository.GetAlertsAsync(ip: _localIp),
+        //            "Administrator" => await _alertRepository.GetAlertsAsync(),
+        //            _ => throw new InvalidOperationException("Nieznana rola użytkownika.")
+        //        };
+
+
+        //        // Filtruj alerty na podstawie wybranego statusu
+        //        if (!string.IsNullOrEmpty(SelectedStatusFilter) && SelectedStatusFilter != "all")
+        //        {
+        //            alerts = alerts.Where(alert => alert.Status?.Trim().Equals(SelectedStatusFilter.Trim(), StringComparison.OrdinalIgnoreCase) == true).ToList();
+        //        }
+
+        //        Console.WriteLine($"Po filtrowaniu: {alerts.Count} alertów");
+
+        //        // Załaduj listę ignorowanych SID-ów z threshold.conf (jeśli dotyczy)
+        //        var ignoredSids = ThresholdConfigManager.LoadRules()
+        //                                               .Where(rule => rule.TimeLimitSeconds == 0) // suppress rules
+        //                                               .Select(rule => rule.Sid)
+        //                                               .ToHashSet();
+
+        //        // Filtruj alerty - usuń z listy alerty ignorowane na podstawie SID
+        //        alerts = alerts.Where(alert => !ignoredSids.Contains(alert.SignatureId.ToString())).ToList();
+
+        //        Console.WriteLine($"Po usunięciu ignorowanych SID-ów: {alerts.Count} alertów");
+
+        //        // Grupa i wyświetlenie alertów
+        //        AlertGroupViewModels.Clear();
+        //        GroupAndDisplayAlerts(alerts);
+
+        //        // Powiadomienie widoku o zmianach
+        //        OnPropertyChanged(nameof(AlertGroupViewModels));
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"Błąd podczas ładowania alertów: {ex.Message}");
+        //    }
+        //}
     }
 }
