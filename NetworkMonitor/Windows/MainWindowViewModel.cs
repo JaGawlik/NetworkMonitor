@@ -381,6 +381,7 @@ namespace NetworkMonitor
                 if (SnortManagerService.Instance.IsSnortRunning)
                 {
                     Console.WriteLine("Snort jest już uruchomiony.");
+                    Task.Run(() => _snortAlertMonitor.StartMonitoringAsync());
                     return;
                 }
 
@@ -390,11 +391,8 @@ namespace NetworkMonitor
                 {
                     MessageBox.Show("Nie udało się uruchomić Snorta. Sprawdź konfigurację.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
-                }
+                }                
 
-                Task.Run(() => _snortAlertMonitor.StartMonitoringAsync());
-
-                Console.WriteLine("Snort i monitorowanie logów zostały uruchomione.");
             }
             catch (Exception ex)
             {

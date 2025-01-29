@@ -28,10 +28,19 @@ internal class SnortAlertMonitor
             return;
         }
 
+        //_regex = new Regex(
+        //     @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]\s(?:\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s(?<srcip>[0-9a-fA-F:.]+)(:\d+)?\s->\s(?<dstip>[0-9a-fA-F:.]+)(:\d+)?",
+        //     RegexOptions.Compiled
+        // );
+        //_regex = new Regex(
+        //    @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]\s(?:\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s(?<srcip>[0-9a-fA-F:.]+)(:(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+)(:(?<dstport>\d+))?",
+        //    RegexOptions.Compiled
+        //);
         _regex = new Regex(
-             @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]\s(?:\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s(?<srcip>[0-9a-fA-F:.]+)(:\d+)?\s->\s(?<dstip>[0-9a-fA-F:.]+)(:\d+)?",
-             RegexOptions.Compiled
-         );
+            @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(?::\d+)?)\]\s(?<message>.*?)\s\[\*\*\](?:\s\[Classification:\s.*?\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s(?<srcip>[0-9a-fA-F:.]+)(?::(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+)(?::(?<dstport>\d+))?",
+            RegexOptions.Compiled
+        );
+
     }
 
     public async Task StartMonitoringAsync()
@@ -76,8 +85,23 @@ internal class SnortAlertMonitor
             (string srcIp, int? srcPort) = ExtractIpAndPort(match.Groups["srcip"].Value);
             (string dstIp, int? dstPort) = ExtractIpAndPort(match.Groups["dstip"].Value);
 
-            string[] sidParts = match.Groups["sid"].Value.Split(':');
-            int sid = sidParts.Length > 1 ? int.TryParse(sidParts[1], out int parsedSid) ? parsedSid : 0 : 0;
+            string sidString = match.Groups["sid"].Value.Split(':')[1];
+            if (!int.TryParse(sidString, out int sid))
+            {
+                sid = 0; 
+            }
+
+            if (!ShouldProcessAlert(sid.ToString(), srcIp, 10))
+            {
+                Console.WriteLine($"Pominięto duplikat alertu SID={sid} od {srcIp}");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(srcIp) || string.IsNullOrEmpty(dstIp) || sid == 0)
+            {
+                Console.WriteLine($"❌ Pominięto alert: Nieprawidłowe dane: srcIp={srcIp}, dstIp={dstIp}, sid={sid}");
+                return;
+            }
 
             int currentYear = DateTime.Now.Year;
 
