@@ -132,7 +132,7 @@ internal class SnortAlertMonitor
         if (string.IsNullOrWhiteSpace(ipWithPort))
             return (null, null);
 
-        //Obsługa IPv6 w nawiasach np. [fe80::1]:443
+        // Obsługa IPv6 w nawiasach np. [fe80::1]:443
         if (ipWithPort.Contains('['))
         {
             var match = Regex.Match(ipWithPort, @"\[(?<ip>[0-9a-fA-F:.]+)\](:(?<port>\d+))?");
@@ -145,7 +145,7 @@ internal class SnortAlertMonitor
         }
         else
         {
-            //Obsługa IPv4 i IPv6 bez nawiasów np. 8.8.8.8:443 lub fe80::1
+            // Obsługa IPv4 i IPv6 bez nawiasów np. 8.8.8.8:443 lub fe80::1
             var match = Regex.Match(ipWithPort, @"^(?<ip>[0-9a-fA-F:.]+)(?::(?<port>\d+))?$");
             if (match.Success)
             {
@@ -155,7 +155,7 @@ internal class SnortAlertMonitor
             }
         }
 
-        //Jeśli nie ma portu, zwracamy IP bez zmian
+        // Jeśli nie udało się sparsować, zwracamy IP bez zmian (bez portu)
         return (ipWithPort, null);
     }
 

@@ -18,7 +18,7 @@ namespace NetworkMonitor.Utilities
 
             if (!File.Exists(ThresholdFilePath))
             {
-                Console.WriteLine($"Plik {ThresholdFilePath} nie istnieje. Tworzenie nowego pliku.");
+                Console.WriteLine($"Plik {ThresholdFilePath} nie istnieje.");
                 return rules;
             }
 

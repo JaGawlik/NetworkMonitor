@@ -1,4 +1,5 @@
 ﻿using NetworkMonitor.Snort;
+using NetworkMonitor.Utilities;
 using System;
 using System.Windows;
 using System.Windows.Controls;
@@ -142,6 +143,51 @@ namespace NetworkMonitor.Windows.Views
                 }
             }
         }
+
+        private void AddLocalRule_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is AdminSettingsViewModel viewModel)
+            {
+                try
+                {
+                    string action = (ActionComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+                    string protocol = (ProtocolComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+                    string sourceIp = SourceIpTextBox.Text;
+                    string sourcePort = SourcePortTextBox.Text;
+                    string direction = (DirectionComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+                    string destinationIp = DestinationIpTextBox.Text;
+                    string destinationPort = DestinationPortTextBox.Text;
+                    string message = MessageTextBox.Text;
+                    int sid = int.TryParse(SidTextBox.Text, out int parsedSid) ? parsedSid : 0;
+                    int rev = int.TryParse(RevTextBox.Text, out int parsedRev) ? parsedRev : 1;
+
+                    if (sid <= 1000000)
+                    {
+                        ShowError("SID musi być liczbą większą od 1000000.");
+                        return;
+                    }
+
+                    viewModel.AddLocalRule(action, protocol, sourceIp, sourcePort, direction, destinationIp, destinationPort, message, sid, rev);
+                    viewModel.SaveLocalRules();
+                    MessageBox.Show($"Dodano regułę: SID={sid}", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                    HideError();
+                }
+                catch (Exception ex)
+                {
+                    ShowError($"Błąd: {ex.Message}");
+                }
+            }
+        }
+
+        private void RemoveLocalRule_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is AdminSettingsViewModel viewModel && sender is Button button && button.DataContext is SnortLocalRule rule)
+            {
+                viewModel.RemoveLocalRule(rule.Sid);
+                MessageBox.Show($"Usunięto regułę: SID={rule.Sid}", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
 
         private void ShowError(string message)
         {

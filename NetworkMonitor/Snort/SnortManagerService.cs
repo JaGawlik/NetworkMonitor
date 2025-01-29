@@ -91,11 +91,10 @@ namespace NetworkMonitor.Snort
         {
             if (!_isRunning)
             {
+                Console.WriteLine("Snort nie jest uruchomiony.");
                 return;
             }
-
-            Console.WriteLine("Zatrzymywanie Snorta...");
-
+                        
             Process[] snortProcesses = Process.GetProcessesByName("snort");
 
             foreach (var process in snortProcesses)
@@ -111,6 +110,9 @@ namespace NetworkMonitor.Snort
                     Console.WriteLine($"Błąd podczas zatrzymywania Snorta: {ex.Message}");
                 }
             }
+
+            Instance._snortProcess.Kill();
+            Instance._snortProcess.WaitForExit();
 
             _isRunning = false;
         }

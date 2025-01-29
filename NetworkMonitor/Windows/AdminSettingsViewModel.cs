@@ -12,7 +12,8 @@ namespace NetworkMonitor.Windows
 {
     public class AdminSettingsViewModel : INotifyPropertyChanged
     {
-        public ObservableCollection<AlertFilterRule> Rules { get; set; } = new ObservableCollection<AlertFilterRule>();
+        public ObservableCollection<AlertFilterRule> ThresholdRules { get; set; } = new ObservableCollection<AlertFilterRule>();
+        public ObservableCollection<SnortLocalRule> LocalRules { get; set; } = new ObservableCollection<SnortLocalRule>();
 
         private ObservableCollection<FrequentAlert> _frequentAlerts = new ObservableCollection<FrequentAlert>();
         public ObservableCollection<FrequentAlert> FrequentAlerts
@@ -36,9 +37,12 @@ namespace NetworkMonitor.Windows
             }
         }
 
+        
+
         public AdminSettingsViewModel()
         {
             LoadRulesFromConfig();
+            LoadLocalRules();
         }
 
         public async Task LoadFrequentAlertsAsync()
@@ -74,29 +78,44 @@ namespace NetworkMonitor.Windows
                 TimeLimitSeconds = timeLimit
             };
 
-            Rules.Add(rule);
+            ThresholdRules.Add(rule);
         }
 
 
         public bool RuleExists(string sid, string ip = null)
         {
-            return Rules.Any(r => r.Sid == sid && (ip == null || r.SourceIp == ip));
+            return ThresholdRules.Any(r => r.Sid == sid && (ip == null || r.SourceIp == ip));
         }
 
         public void LoadRulesFromConfig()
         {
             var rules = ThresholdConfigManager.LoadRules();
-            Rules.Clear();
+            ThresholdRules.Clear();
 
             foreach (var rule in rules)
             {
-                Rules.Add(rule);
+                ThresholdRules.Add(rule);
             }
         }
 
         public void SaveRules()
         {
-            ThresholdConfigManager.SaveRules(Rules.ToList());
+            ThresholdConfigManager.SaveRules(ThresholdRules.ToList());
+            //LocalRulesConfigManager.SaveRules(LocalRules.ToList()); <- zobaczymym czy dziala
+        }
+        public void LoadLocalRules()
+        {
+            var rules = LocalRulesConfigManager.LoadLocalRules();
+            LocalRules.Clear();
+
+            foreach (var rule in rules)
+            {
+                LocalRules.Add(rule);
+            }
+        }
+        public void SaveLocalRules()
+        {
+            LocalRulesConfigManager.SaveRules(LocalRules.ToList());
         }
 
         public void AddSuppressRule(string sid, string track, string ip = null, int? port = null)
@@ -113,7 +132,7 @@ namespace NetworkMonitor.Windows
                 TimeLimitSeconds = 0
             };
 
-            Rules.Add(rule);
+            ThresholdRules.Add(rule);
             ThresholdConfigManager.AddSuppressRule(int.Parse(sid), track, ip, port);
         }
 
@@ -131,13 +150,25 @@ namespace NetworkMonitor.Windows
                 TimeLimitSeconds = seconds
             };
 
-            Rules.Add(rule);
+            ThresholdRules.Add(rule);
             ThresholdConfigManager.AddEventFilterRule(int.Parse(sid), track, ip, port, count, seconds);
+        }
+
+        public void AddLocalRule(string action, string protocol, string sourceIp, string sourcePort, string direciton, string destinationIp, string destinationPort, string message, int sid, int rev)
+        {
+            string rule = $"{action} {protocol} {sourceIp} {sourcePort} {direciton} {destinationIp} {destinationPort} ({message})";
+
+            LocalRulesConfigManager.AddRule(action, protocol, sourceIp, sourcePort, direciton, destinationIp, destinationPort, message, sid, rev);
+            LoadLocalRules();
+        }
+        public void RemoveLocalRule(int sid)
+        {
+            LocalRulesConfigManager.RemoveRule(sid);
+            LoadLocalRules();
         }
         public void RestartSnort()
         {
-            SnortManagerService snortService = new SnortManagerService();
-            snortService.RestartSnort();
+            SnortManagerService.Instance.RestartSnort(); // <- Tu moze byc błąd
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

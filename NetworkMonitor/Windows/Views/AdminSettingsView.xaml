@@ -50,54 +50,133 @@
         <!-- Prawa sekcja: Sekcja dodawania reguły -->
         <Border Grid.Column="1" Grid.RowSpan="2" Margin="10" BorderBrush="Gray" BorderThickness="1">
             <StackPanel Margin="10">
-                <TextBlock Text="Dodaj nową regułę ignorowania" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" HorizontalAlignment="Center" />
+                <StackPanel>
+                    <TextBlock Text="Dodaj nową regułę ignorowania" FontWeight="Bold" FontSize="16" Margin="0,0,0,10" HorizontalAlignment="Center" />
 
-                <!-- Formularz dodawania reguły -->
-                <Grid Margin="0,0,0,10" HorizontalAlignment="Center">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="60" />
-                        <!-- Label width -->
-                        <ColumnDefinition Width="150" />
-                        <!-- Input width -->
-                        <ColumnDefinition Width="60" />
-                        <!-- Label width -->
-                        <ColumnDefinition Width="150" />
-                        <!-- Input width -->
-                    </Grid.ColumnDefinitions>
+                    <!-- Formularz dodawania reguły -->
+                    <Grid Margin="0,0,0,10" HorizontalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="60" />
+                            <!-- Label width -->
+                            <ColumnDefinition Width="150" />
+                            <!-- Input width -->
+                            <ColumnDefinition Width="60" />
+                            <!-- Label width -->
+                            <ColumnDefinition Width="150" />
+                            <!-- Input width -->
+                        </Grid.ColumnDefinitions>
 
-                    <!-- Pierwszy rząd -->
-                    <TextBlock Text="SID:" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" FontSize="15"/>
-                    <TextBox x:Name="SidInput" Width="120" Height="25" Margin="0,0,10,0" Grid.Row="0" Grid.Column="1" 
-                             ToolTip="Unikalny identyfikator alertu (Signature ID), który chcesz ignorować. SID jest przypisany do każdej reguły w Snort." />
+                        <!-- Pierwszy rząd -->
+                        <TextBlock Text="SID:" VerticalAlignment="Center" Grid.Row="0" Grid.Column="0" FontSize="15"/>
+                        <TextBox x:Name="SidInput" Width="120" Height="25" Margin="0,0,10,0" Grid.Row="0" Grid.Column="1" 
+                                 ToolTip="Unikalny identyfikator alertu (Signature ID), który chcesz ignorować. SID jest przypisany do każdej reguły w Snort." />
 
-                    <TextBlock Text="Track:" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" FontSize="15"/>
-                    <ComboBox x:Name="TrackComboBox" Width="120" Height="25" Margin="0,0,10,0" Grid.Row="0" Grid.Column="3"
-                              ToolTip="Określa, czy reguła ma działać dla adresu źródłowego (by_src) czy docelowego (by_dst).">
-                        <ComboBoxItem Content="by_src" ToolTip="Śledzenie na podstawie adresu źródłowego (by_src)." />
-                        <ComboBoxItem Content="by_dst" ToolTip="Śledzenie na podstawie adresu docelowego (by_dst)." />
-                    </ComboBox>
+                        <TextBlock Text="Track:" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" FontSize="15"/>
+                        <ComboBox x:Name="TrackComboBox" Width="120" Height="25" Margin="0,0,10,0" Grid.Row="0" Grid.Column="3"
+                                  ToolTip="Określa, czy reguła ma działać dla adresu źródłowego (by_src) czy docelowego (by_dst).">
+                            <ComboBoxItem Content="by_src" ToolTip="Śledzenie na podstawie adresu źródłowego (by_src)." />
+                            <ComboBoxItem Content="by_dst" ToolTip="Śledzenie na podstawie adresu docelowego (by_dst)." />
+                        </ComboBox>
 
-                    <!-- Drugi rząd -->
-                    <TextBlock Text="IP:" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" FontSize="15"/>
-                    <TextBox x:Name="IpInput" Width="120" Height="25" Margin="0,5,10,0" Grid.Row="1" Grid.Column="1"
-                             ToolTip="Opcjonalne. Adres IP, dla którego reguła ma działać. Jeśli pozostawisz puste, reguła będzie działać dla wszystkich adresów IP." />
+                        <!-- Drugi rząd -->
+                        <TextBlock Text="IP:" VerticalAlignment="Center" Grid.Row="1" Grid.Column="0" FontSize="15"/>
+                        <TextBox x:Name="IpInput" Width="120" Height="25" Margin="0,5,10,0" Grid.Row="1" Grid.Column="1"
+                                 ToolTip="Opcjonalne. Adres IP, dla którego reguła ma działać. Jeśli pozostawisz puste, reguła będzie działać dla wszystkich adresów IP." />
 
-                    <TextBlock Text="Port:" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" FontSize="15"/>
-                    <TextBox x:Name="PortInput" Width="120" Height="25" Margin="0,5,10,0" Grid.Row="1" Grid.Column="3"
-                             ToolTip="Opcjonalne. Port, dla którego reguła ma działać. Jeśli pozostawisz puste, reguła będzie działać dla wszystkich portów." />
-                </Grid>
+                        <TextBlock Text="Port:" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" FontSize="15"/>
+                        <TextBox x:Name="PortInput" Width="120" Height="25" Margin="0,5,10,0" Grid.Row="1" Grid.Column="3"
+                                 ToolTip="Opcjonalne. Port, dla którego reguła ma działać. Jeśli pozostawisz puste, reguła będzie działać dla wszystkich portów." />
+                    </Grid>
 
-                <!-- Przyciski dodawania reguły -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Content="Ignortuj alerty" Click="AddSuppressRule_Click" Margin="0,0,10,0" FontSize="12" />
-                    <Button Content="Ogranicz alerty" Click="AddEventFilterRule_Click" FontSize="12"/>
+                    <!-- Przyciski dodawania reguły -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Content="Ignortuj alerty" Click="AddSuppressRule_Click" Margin="0,0,10,0" FontSize="12" />
+                        <Button Content="Ogranicz alerty" Click="AddEventFilterRule_Click" FontSize="12"/>
+                    </StackPanel>
+                </StackPanel>
+                
+                <StackPanel>
+                    <TextBlock Text="Tworzenie nowej reguły Snorta" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+
+                    <!-- Wybór akcji -->
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <TextBlock Text="Akcja: " VerticalAlignment="Center" Width="100"/>
+                        <ComboBox x:Name="ActionComboBox" Width="200">
+                            <ComboBoxItem Content="alert" />
+                            <ComboBoxItem Content="log" />
+                            <ComboBoxItem Content="drop" />
+                            <ComboBoxItem Content="reject" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Wybór protokołu -->
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <TextBlock Text="Protokół: " VerticalAlignment="Center" Width="100"/>
+                        <ComboBox x:Name="ProtocolComboBox" Width="200">
+                            <ComboBoxItem Content="icmp" />
+                            <ComboBoxItem Content="tcp" />
+                            <ComboBoxItem Content="udp" />
+                            <ComboBoxItem Content="ip" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Źródłowy IP i Port -->
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <TextBlock Text="Źródłowy IP: " VerticalAlignment="Center" Width="100"/>
+                        <TextBox x:Name="SourceIpTextBox" Width="200" Text="any"/>
+                        <TextBlock Text="Port: " VerticalAlignment="Center" Width="50"/>
+                        <TextBox x:Name="SourcePortTextBox" Width="100" Text="any"/>
+                    </StackPanel>
+
+                    <!-- Wybór kierunku -->
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <TextBlock Text="Kierunek: " VerticalAlignment="Center" Width="100"/>
+                        <ComboBox x:Name="DirectionComboBox" Width="200">
+                            <ComboBoxItem Content="-&gt;" /><!-- -> -->
+                            <ComboBoxItem Content="&lt;-&gt;" /><!-- <-> -->
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Docelowy IP i Port -->
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <TextBlock Text="Docelowy IP: " VerticalAlignment="Center" Width="100"/>
+                        <TextBox x:Name="DestinationIpTextBox" Width="200" Text="any"/>
+                        <TextBlock Text="Port: " VerticalAlignment="Center" Width="50"/>
+                        <TextBox x:Name="DestinationPortTextBox" Width="100" Text="any"/>
+                    </StackPanel>
+
+                    <!-- Opcje reguły -->
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <TextBlock Text="Wiadomość (msg): " VerticalAlignment="Center" Width="100"/>
+                        <TextBox x:Name="MessageTextBox" Width="350" Text="My custom rule"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,5">
+                        <TextBlock Text="SID: " VerticalAlignment="Center" Width="100"/>
+                        <TextBox x:Name="SidTextBox" Width="100" Text="1000001"/>
+                        <TextBlock Text="Rev: " VerticalAlignment="Center" Width="50"/>
+                        <TextBox x:Name="RevTextBox" Width="50" Text="1"/>
+                    </StackPanel>
+
+                    <Button Content="Dodaj regułę" Click="AddLocalRule_Click" />
+
+                    <ListBox ItemsSource="{Binding LocalRules}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding FormattedRule}" Margin="5,0"/>
+                                    <Button Content="Usuń" Click="RemoveLocalRule_Click" DataContext="{Binding}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </StackPanel>
 
-                
+
                 <TextBlock x:Name="ErrorMessage" Foreground="Red" Visibility="Collapsed" Margin="0,5,0,5" />
             </StackPanel>
         </Border>
