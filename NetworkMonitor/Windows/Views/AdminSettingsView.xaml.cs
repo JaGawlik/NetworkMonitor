@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NetworkMonitor.Snort;
+using System;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -122,6 +123,22 @@ namespace NetworkMonitor.Windows.Views
                 catch (Exception ex)
                 {
                     ShowError($"Błąd: {ex.Message}");
+                }
+            }
+        }
+
+        private void RestartSnort_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is AdminSettingsViewModel viewModel)
+            {
+                try
+                {
+                    viewModel.RestartSnort();
+                    MessageBox.Show("Snort został zrestartowany!", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Błąd podczas restartu Snorta: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }

@@ -13,6 +13,7 @@ namespace NetworkMonitor.Snort
         //private static SnortManagerService _instance;
         //public static SnortManagerService Instance => _instance ??= new SnortManagerService();
         //public string selectedInterface { get; set; }
+        private Process _snortProcess;
         public Process StartSnort()
         {
             ConfigurationManager.UpdateSnortConfig();
@@ -77,29 +78,29 @@ namespace NetworkMonitor.Snort
                 RedirectStandardError = true
             };
 
-            Process snortProcess = new Process { StartInfo = startInfo };
+            _snortProcess = new Process { StartInfo = startInfo };
 
             try
             {
-                snortProcess.OutputDataReceived += (sender, e) =>
+                _snortProcess.OutputDataReceived += (sender, e) =>
                 {
                     if (!string.IsNullOrEmpty(e.Data))
                         Console.WriteLine($"[Snort]: {e.Data}");
                 };
 
-                snortProcess.ErrorDataReceived += (sender, e) =>
+                _snortProcess.ErrorDataReceived += (sender, e) =>
                 {
                     if (!string.IsNullOrEmpty(e.Data))
                         Console.WriteLine($"[Snort Error]: {e.Data}");
                 };
 
-                bool started = snortProcess.Start();
+                bool started = _snortProcess.Start();
                 if (started)
                 {
-                    snortProcess.BeginOutputReadLine(); 
-                    snortProcess.BeginErrorReadLine();  
+                    _snortProcess.BeginOutputReadLine();
+                    _snortProcess.BeginErrorReadLine();  
                     Console.WriteLine("Snort został uruchomiony.");
-                    return snortProcess;
+                    return _snortProcess;
                 }
             }
             catch (Exception ex)
@@ -111,6 +112,50 @@ namespace NetworkMonitor.Snort
             return null;
         }
 
+        public void RestartSnort()
+        {
+            Console.WriteLine("Restartowanie Snorta...");
+            StopSnort();
+            Task.Delay(2000).Wait();
+            StartSnort();
+        }
+
+        public void StopSnort()
+        {
+            Console.WriteLine("Zatrzymywanie Snorta...");
+
+            // Pobierz wszystkie uruchomione procesy Snorta
+            Process[] snortProcesses = Process.GetProcessesByName("snort");
+
+            foreach (var process in snortProcesses)
+            {
+                try
+                {
+                    process.Kill(); 
+                    process.WaitForExit(); 
+                    Console.WriteLine("Snort został zatrzymany.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Błąd podczas zatrzymywania Snorta: {ex.Message}");
+                }
+            }
+
+            if (_snortProcess != null && !_snortProcess.HasExited)
+            {
+                try
+                {
+                    Console.WriteLine("Zatrzymywanie Snorta...");
+                    _snortProcess.Kill();
+                    _snortProcess.WaitForExit();
+                    Console.WriteLine("Snort został zatrzymany.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Błąd podczas zatrzymywania Snorta: {ex.Message}");
+                }
+            }
+        }
 
 
         private string ExecuteSnortCommand(string snortPath, string arguments)

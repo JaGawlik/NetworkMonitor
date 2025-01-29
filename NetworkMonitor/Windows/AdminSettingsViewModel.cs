@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using NetworkMonitor.Model;
+using NetworkMonitor.Snort;
 using NetworkMonitor.Utilities;
 
 namespace NetworkMonitor.Windows
@@ -133,13 +134,19 @@ namespace NetworkMonitor.Windows
             Rules.Add(rule);
             ThresholdConfigManager.AddEventFilterRule(int.Parse(sid), track, ip, port, count, seconds);
         }
+        public void RestartSnort()
+        {
+            SnortManagerService snortService = new SnortManagerService();
+            snortService.RestartSnort();
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        }    
+
     }
 
     public class AlertFilterRule
