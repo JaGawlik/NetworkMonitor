@@ -105,61 +105,61 @@
                     <!-- Wybór akcji -->
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="Akcja: " VerticalAlignment="Center" Width="100"/>
-                        <ComboBox x:Name="ActionComboBox" Width="200">
-                            <ComboBoxItem Content="alert" />
-                            <ComboBoxItem Content="log" />
-                            <ComboBoxItem Content="drop" />
-                            <ComboBoxItem Content="reject" />
+                        <ComboBox x:Name="ActionComboBox" Width="200" ToolTip="Określa, co Snort ma zrobić, gdy wykryje pasujący ruch sieciowy.">
+                            <ComboBoxItem Content="alert" ToolTip="Wygeneruj alert, ale przepuść ruch." />
+                            <ComboBoxItem Content="log" ToolTip="Zapisz ruch do logów, ale nie generuj alertu." />
+                            <ComboBoxItem Content="drop" ToolTip="Porzuć pakiet bez powiadamiania nadawcy." />
+                            <ComboBoxItem Content="reject" ToolTip="Porzuć pakiet i wyślij nadawcy odpowiedź ICMP lub RST (TCP)." />
                         </ComboBox>
                     </StackPanel>
 
                     <!-- Wybór protokołu -->
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="Protokół: " VerticalAlignment="Center" Width="100"/>
-                        <ComboBox x:Name="ProtocolComboBox" Width="200">
-                            <ComboBoxItem Content="icmp" />
-                            <ComboBoxItem Content="tcp" />
-                            <ComboBoxItem Content="udp" />
-                            <ComboBoxItem Content="ip" />
+                        <ComboBox x:Name="ProtocolComboBox" Width="200" ToolTip="Określa, dla jakiego protokołu ma działać reguła.">
+                            <ComboBoxItem Content="icmp" ToolTip="Monitorowanie ruchu ICMP (np. ping)." />
+                            <ComboBoxItem Content="tcp" ToolTip="Monitorowanie ruchu TCP." />
+                            <ComboBoxItem Content="udp" ToolTip="Monitorowanie ruchu UDP." />
+                            <ComboBoxItem Content="ip" ToolTip="Monitorowanie dowolnego ruchu IP." />
                         </ComboBox>
                     </StackPanel>
 
                     <!-- Źródłowy IP i Port -->
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="Źródłowy IP: " VerticalAlignment="Center" Width="100"/>
-                        <TextBox x:Name="SourceIpTextBox" Width="200" Text="any"/>
-                        <TextBlock Text="Port: " VerticalAlignment="Center" Width="50"/>
-                        <TextBox x:Name="SourcePortTextBox" Width="100" Text="any"/>
+                        <TextBox x:Name="SourceIpTextBox" Width="200" Text="any" ToolTip="Adres IP źródła pakietu (np. 192.168.1.1). Wpisz 'any', aby dopasować każdy adres."/>
+                        <TextBlock Text="Port: " VerticalAlignment="Center" Width="50" Margin="5,0,0,0"/>
+                        <TextBox x:Name="SourcePortTextBox" Width="100" Text="any" ToolTip="Numer portu źródłowego (np. 80 dla HTTP). Wpisz 'any', aby dopasować dowolny port."/>
                     </StackPanel>
 
                     <!-- Wybór kierunku -->
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="Kierunek: " VerticalAlignment="Center" Width="100"/>
-                        <ComboBox x:Name="DirectionComboBox" Width="200">
-                            <ComboBoxItem Content="-&gt;" /><!-- -> -->
-                            <ComboBoxItem Content="&lt;-&gt;" /><!-- <-> -->
+                        <ComboBox x:Name="DirectionComboBox" Width="200" ToolTip="Określa kierunek ruchu, dla którego ma działać reguła.">
+                            <ComboBoxItem Content="-&gt;" ToolTip="Reguła działa dla ruchu od źródła do celu (jednokierunkowo)." />
+                            <ComboBoxItem Content="&lt;&gt;" ToolTip="Reguła działa dla ruchu w obu kierunkach." />
                         </ComboBox>
                     </StackPanel>
 
                     <!-- Docelowy IP i Port -->
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="Docelowy IP: " VerticalAlignment="Center" Width="100"/>
-                        <TextBox x:Name="DestinationIpTextBox" Width="200" Text="any"/>
-                        <TextBlock Text="Port: " VerticalAlignment="Center" Width="50"/>
-                        <TextBox x:Name="DestinationPortTextBox" Width="100" Text="any"/>
+                        <TextBox x:Name="DestinationIpTextBox" Width="200" Text="any" ToolTip="Adres IP docelowy pakietu. Wpisz 'any', aby dopasować każdy adres."/>
+                        <TextBlock Text="Port: " VerticalAlignment="Center" Width="50" Margin="5,0,0,0"/>
+                        <TextBox x:Name="DestinationPortTextBox" Width="100" Text="any" ToolTip="Numer portu docelowego (np. 443 dla HTTPS). Wpisz 'any', aby dopasować dowolny port."/>
                     </StackPanel>
 
                     <!-- Opcje reguły -->
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="Wiadomość (msg): " VerticalAlignment="Center" Width="100"/>
-                        <TextBox x:Name="MessageTextBox" Width="350" Text="My custom rule"/>
+                        <TextBox x:Name="MessageTextBox" Width="350" Text="My custom rule" ToolTip="Opis reguły, który będzie wyświetlany w logach Snorta."/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="SID: " VerticalAlignment="Center" Width="100"/>
-                        <TextBox x:Name="SidTextBox" Width="100" Text="1000001"/>
+                        <TextBox x:Name="SidTextBox" Width="100" Text="1000000" ToolTip="Unikalny identyfikator reguły (Signature ID). Musi być unikalny w lokalnych regułach, oraz z zasady wyższy niż 1000000"/>
                         <TextBlock Text="Rev: " VerticalAlignment="Center" Width="50"/>
-                        <TextBox x:Name="RevTextBox" Width="50" Text="1"/>
+                        <TextBox x:Name="RevTextBox" Width="50" Text="1" ToolTip="Numer wersji reguły. Zwiększaj przy jej aktualizacji."/>
                     </StackPanel>
 
                     <Button Content="Dodaj regułę" Click="AddLocalRule_Click" />

@@ -69,6 +69,14 @@ namespace NetworkMonitor.Utilities
         /// </summary>
         public static void AddRule(string action, string protocol, string sourceIp, string sourcePort, string direction, string destinationIp, string destinationPort, string message, int sid, int rev)
         {
+            var rules = LoadLocalRules();
+
+            if (rules.Any(r => r.Sid == sid))
+            {
+                Console.WriteLine($"Reguła o SID={sid} już istnieje! Nie dodano reguły.");
+                return;
+            }
+
             var newRule = new SnortLocalRule
             {
                 Action = action,
@@ -82,13 +90,6 @@ namespace NetworkMonitor.Utilities
                 Sid = sid,
                 Rev = rev
             };
-
-            var rules = LoadLocalRules();
-            if (rules.Any(r => r.Sid == sid))
-            {
-                Console.WriteLine($"Reguła o SID={sid} już istnieje!");
-                return;
-            }
 
             rules.Add(newRule);
             SaveRules(rules);
@@ -139,7 +140,7 @@ namespace NetworkMonitor.Utilities
 
         public static SnortLocalRule Parse(string ruleLine)
         {
-            var regexPattern = @"^(?<action>\w+)\s+(?<protocol>\w+)\s+(?<srcip>[^\s]+)\s+(?<srcport>[^\s]+)\s+(?<direction><->|->)\s+(?<dstip>[^\s]+)\s+(?<dstport>[^\s]+)\s+\(msg:""(?<message>[^""]+)"";\s+sid:(?<sid>\d+);\s+rev:(?<rev>\d+);?\)$";
+            var regexPattern = @"^(?<action>\w+)\s+(?<protocol>\w+)\s+(?<srcip>[^\s]+)\s+(?<srcport>[^\s]+)\s+(?<direction><>|->)\s+(?<dstip>[^\s]+)\s+(?<dstport>[^\s]+)\s+\(msg:""(?<message>[^""]+)"";\s+sid:(?<sid>\d+);\s+rev:(?<rev>\d+);?\)$";
 
             var match = Regex.Match(ruleLine, regexPattern);
             if (!match.Success)

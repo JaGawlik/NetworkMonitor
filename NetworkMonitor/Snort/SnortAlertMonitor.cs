@@ -27,17 +27,11 @@ internal class SnortAlertMonitor
             Console.WriteLine($"Plik logów Snorta nie istnieje: {_snortLogPath}");
             return;
         }
-
-        //_regex = new Regex(
-        //    @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
-        //    @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
-        //    @"(?<srcip>[0-9a-fA-F:.]+)(?::(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+)(?::(?<dstport>\d+))?",
-        //    RegexOptions.Compiled
-        //); 
+             
         _regex = new Regex(
             @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
             @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
-            @"(?<srcip>[0-9a-fA-F:.]+?)(?::(?<srcport>\d+))?\s->\s(?<dstip>[0-9a-fA-F:.]+?)(?::(?<dstport>\d+))?",
+            @"(?<srcip>(?:[0-9]{1,3}(?:\.[0-9]{1,3}){3}|\[[0-9a-fA-F:]+\]|[0-9a-fA-F:]+))(?::(?<srcport>\d+))?\s->\s(?<dstip>(?:[0-9]{1,3}(?:\.[0-9]{1,3}){3}|\[[0-9a-fA-F:]+\]|[0-9a-fA-F:]+))(?::(?<dstport>\d+))?",
             RegexOptions.Compiled
         );
     }
@@ -81,8 +75,12 @@ internal class SnortAlertMonitor
             string alertMessage = match.Groups["message"].Value;
             string priority = match.Groups["priority"].Value;
             string protocol = match.Groups["protocol"].Value;
-            (string srcIp, int? srcPort) = ExtractIpAndPort(match.Groups["srcip"].Value);
-            (string dstIp, int? dstPort) = ExtractIpAndPort(match.Groups["dstip"].Value);
+
+            string srcIp = match.Groups["srcip"].Value;
+            int? srcPort = match.Groups["srcport"].Success ? int.Parse(match.Groups["srcport"].Value) : null;
+
+            string dstIp = match.Groups["dstip"].Value;
+            int? dstPort = match.Groups["dstport"].Success ? int.Parse(match.Groups["dstport"].Value) : null;
 
             string sidString = match.Groups["sid"].Value.Split(':')[1];
             if (!int.TryParse(sidString, out int sid))

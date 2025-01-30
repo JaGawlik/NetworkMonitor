@@ -43,7 +43,7 @@ namespace NetworkMonitor.Windows.Views
             {
                 var alert = viewModel.SelectedFrequentAlert;
 
-                if (!viewModel.RuleExists(alert.Sid)) // Sprawdzenie, czy reguła już istnieje
+                if (!viewModel.ThresholdRuleExists(alert.Sid)) // Sprawdzenie, czy reguła już istnieje
                 {
                     viewModel.AddRule(alert.Sid, "", 60);
                     viewModel.SaveRules(); // Automatyczne zapisanie reguły
@@ -73,7 +73,7 @@ namespace NetworkMonitor.Windows.Views
 
                 try
                 {
-                    if (!viewModel.RuleExists(sid, ip)) // Sprawdzenie, czy reguła już istnieje
+                    if (!viewModel.ThresholdRuleExists(sid, ip)) // Sprawdzenie, czy reguła już istnieje
                     {
                         viewModel.AddSuppressRule(sid, track, ip, port);
                         viewModel.SaveRules(); // Automatyczne zapisanie reguły
@@ -109,7 +109,7 @@ namespace NetworkMonitor.Windows.Views
 
                 try
                 {
-                    if (!viewModel.RuleExists(sid, ip)) // Sprawdzenie, czy reguła już istnieje
+                    if (!viewModel.ThresholdRuleExists(sid, ip)) // Sprawdzenie, czy reguła już istnieje
                     {
                         viewModel.AddEventFilterRule(sid, track, ip, port, count: 1, seconds: 60);
                         viewModel.SaveRules(); // Automatyczne zapisanie reguły
@@ -164,6 +164,12 @@ namespace NetworkMonitor.Windows.Views
                     if (sid <= 1000000)
                     {
                         ShowError("SID musi być liczbą większą od 1000000.");
+                        return;
+                    }
+
+                    if (viewModel.LocalRuleExists(sid))
+                    {
+                        ShowError($"Reguła z SID={sid} już istnieje!");
                         return;
                     }
 

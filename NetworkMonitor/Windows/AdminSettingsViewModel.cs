@@ -65,7 +65,7 @@ namespace NetworkMonitor.Windows
 
         public void AddRule(string sid, string sourceIp, int timeLimit)
         {
-            if (RuleExists(sid)) // Sprawdzenie przed dodaniem
+            if (ThresholdRuleExists(sid)) // Sprawdzenie przed dodaniem
             {
                 MessageBox.Show("Reguła z tym SID już istnieje!", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -82,7 +82,7 @@ namespace NetworkMonitor.Windows
         }
 
 
-        public bool RuleExists(string sid, string ip = null)
+        public bool ThresholdRuleExists(string sid, string ip = null)
         {
             return ThresholdRules.Any(r => r.Sid == sid && (ip == null || r.SourceIp == ip));
         }
@@ -120,7 +120,7 @@ namespace NetworkMonitor.Windows
 
         public void AddSuppressRule(string sid, string track, string ip = null, int? port = null)
         {
-            if (RuleExists(sid, ip))
+            if (ThresholdRuleExists(sid, ip))
             {
                 throw new Exception($"Reguła suppress dla SID={sid} i IP={ip} już istnieje!");
             }
@@ -138,7 +138,7 @@ namespace NetworkMonitor.Windows
 
         public void AddEventFilterRule(string sid, string track, string ip, int? port, int count, int seconds)
         {
-            if (RuleExists(sid, ip))
+            if (ThresholdRuleExists(sid, ip))
             {
                 throw new Exception($"Reguła event_filter dla SID={sid} i IP={ip} już istnieje!");
             }
@@ -156,7 +156,11 @@ namespace NetworkMonitor.Windows
 
         public void AddLocalRule(string action, string protocol, string sourceIp, string sourcePort, string direciton, string destinationIp, string destinationPort, string message, int sid, int rev)
         {
-            string rule = $"{action} {protocol} {sourceIp} {sourcePort} {direciton} {destinationIp} {destinationPort} ({message})";
+            if(LocalRuleExists(sid))
+            {
+                MessageBox.Show($"Reguła z SID={sid} już istnieje!", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             LocalRulesConfigManager.AddRule(action, protocol, sourceIp, sourcePort, direciton, destinationIp, destinationPort, message, sid, rev);
             LoadLocalRules();
@@ -165,6 +169,10 @@ namespace NetworkMonitor.Windows
         {
             LocalRulesConfigManager.RemoveRule(sid);
             LoadLocalRules();
+        }
+        public bool LocalRuleExists(int sid)
+        {
+            return LocalRules.Any(r => r.Sid == sid);
         }
         public void RestartSnort()
         {
