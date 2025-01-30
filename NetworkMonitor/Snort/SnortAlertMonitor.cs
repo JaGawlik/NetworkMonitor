@@ -16,12 +16,14 @@ internal class SnortAlertMonitor
 
     public event Action<Alert> AlertReceived;
 
+    private List<Alert> _alertBuffer = new List<Alert>();
+    private const int BufferSize = 50; 
+
     public SnortAlertMonitor(Dispatcher dispatcher)
     {
         _snortLogPath = NetworkMonitor.AppConfiguration.ConfigurationManager.GetSetting("LogFilePath");
         _apiUrl = NetworkMonitor.AppConfiguration.ConfigurationManager.GetSetting("ApiAddress");
         _localIP = NetworkMonitor.AppConfiguration.ConfigurationManager.GetLocalIpAddress();
-
         if (!File.Exists(_snortLogPath))
         {
             Console.WriteLine($"Plik logów Snorta nie istnieje: {_snortLogPath}");
@@ -35,6 +37,7 @@ internal class SnortAlertMonitor
             RegexOptions.Compiled
         );
     }
+
 
     public async Task StartMonitoringAsync()
     {
@@ -61,6 +64,13 @@ internal class SnortAlertMonitor
 
                 await FetchAlertsFromApiAsync(_localIP);
 
+                // Wyślij pozostałe alerty z bufora
+                if (_alertBuffer.Count > 0)
+                {
+                    await SendAlertsToApiAsync(_alertBuffer);
+                    _alertBuffer.Clear();
+                }
+
                 await Task.Delay(3000);
             }
         }
@@ -85,7 +95,7 @@ internal class SnortAlertMonitor
             string sidString = match.Groups["sid"].Value.Split(':')[1];
             if (!int.TryParse(sidString, out int sid))
             {
-                sid = 0; 
+                sid = 0;
             }
 
             if (!ShouldProcessAlert(sid.ToString(), srcIp, 10))
@@ -124,7 +134,13 @@ internal class SnortAlertMonitor
                     SnortInstance = Dns.GetHostName()
                 };
 
-                await SendAlertToApiAsync(alert);
+                _alertBuffer.Add(alert);
+
+                if (_alertBuffer.Count >= BufferSize)
+                {
+                    await SendAlertsToApiAsync(_alertBuffer);
+                    _alertBuffer.Clear();
+                }
 
                 AlertReceived?.Invoke(alert);
             }
@@ -163,21 +179,19 @@ internal class SnortAlertMonitor
         return (ipWithPort, null);
     }
 
-
-
-    private async Task SendAlertToApiAsync(Alert alert)
+    private async Task SendAlertsToApiAsync(List<Alert> alerts)
     {
         using var httpClient = new HttpClient();
         try
         {
-            var response = await httpClient.PostAsJsonAsync($"{_apiUrl}/api/alerts", alert);
+            var response = await httpClient.PostAsJsonAsync($"{_apiUrl}/api/alerts/batch", alerts);
             if (response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"Alert wysłany do API: {alert.AlertMessage}");
+                Console.WriteLine($"Wysłano {alerts.Count} alertów do API.");
             }
             else
             {
-                Console.WriteLine($"Błąd podczas wysyłania alertu do API: {response.StatusCode}");
+                Console.WriteLine($"Błąd podczas wysyłania alertów do API: {response.StatusCode}");
             }
         }
         catch (Exception ex)
@@ -185,6 +199,8 @@ internal class SnortAlertMonitor
             Console.WriteLine($"Błąd podczas komunikacji z API: {ex.Message}");
         }
     }
+      
+
 
     private async Task FetchAlertsFromApiAsync(string localIp)
     {
@@ -259,23 +275,20 @@ internal class SnortAlertMonitor
         }
     }
 
+    private HashSet<string> _processedAlerts = new HashSet<string>();
 
-    private Dictionary<string, DateTime> _recentAlerts = new();
-
+    //Pomijanie przetworzonych alertów
     private bool ShouldProcessAlert(string sid, string srcIp, int seconds)
     {
         string key = $"{sid}:{srcIp}";
 
-        if (_recentAlerts.TryGetValue(key, out DateTime lastAlertTime))
+        if (_processedAlerts.Contains(key))
         {
-            if ((DateTime.Now - lastAlertTime).TotalSeconds < seconds)
-            {
-                return false; // Ignoruj alert
-            }
+            return false; // Ignoruj alert
         }
 
-        _recentAlerts[key] = DateTime.Now; // Zapisz czas ostatniego alertu
-        return true; // Procesuj alert
+        _processedAlerts.Add(key); 
+        return true; 
     }
 
 }

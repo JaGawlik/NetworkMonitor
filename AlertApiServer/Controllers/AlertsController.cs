@@ -162,5 +162,66 @@ namespace AlertApiServer.Controllers
                 return StatusCode(500, $"Error updating alert status: {ex.Message}");
             }
         }
+
+        [HttpPost("batch")]
+        public IActionResult ReceiveAlertsBatch([FromBody] List<Alert> alerts)
+        {
+            if (alerts == null || !alerts.Any())
+            {
+                return BadRequest("No alerts provided.");
+            }
+
+            Console.WriteLine($"Otrzymano {alerts.Count} alertów do przetworzenia.");
+
+            try
+            {
+                using var conn = new NpgsqlConnection(_connectionString);
+                conn.Open();
+
+                // Rozpocznij transakcję
+                using var transaction = conn.BeginTransaction();
+
+                try
+                {
+                    string query = @"
+                INSERT INTO alerts (timestamp, alert_message, source_ip, source_port, destination_ip, destination_port, protocol, status, snort_instance, signature_id)
+                VALUES (@timestamp, @alertMessage, @sourceIp, @sourcePort, @destinationIp, @destinationPort, @protocol, @status, @snortInstance, @signatureId)";
+
+                    foreach (var alert in alerts)
+                    {
+                        using var cmd = new NpgsqlCommand(query, conn, transaction);
+                        cmd.Parameters.AddWithValue("timestamp", alert.Timestamp);
+                        cmd.Parameters.AddWithValue("alertMessage", alert.AlertMessage);
+                        cmd.Parameters.AddWithValue("sourceIp", alert.SourceIp);
+                        cmd.Parameters.AddWithValue("sourcePort", alert.SourcePort ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("destinationIp", alert.DestinationIp);
+                        cmd.Parameters.AddWithValue("destinationPort", alert.DestinationPort ?? (object)DBNull.Value);
+                        cmd.Parameters.AddWithValue("protocol", alert.Protocol);
+                        cmd.Parameters.AddWithValue("status", alert.Status);
+                        cmd.Parameters.AddWithValue("snortInstance", alert.SnortInstance);
+                        cmd.Parameters.AddWithValue("signatureId", alert.SignatureId);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Zatwierdź transakcję
+                    transaction.Commit();
+
+                    Console.WriteLine($"Pomyślnie zapisano {alerts.Count} alertów.");
+                    return Ok($"{alerts.Count} alerts received and stored.");
+                }
+                catch (Exception ex)
+                {
+                    // Wycofaj transakcję w przypadku błędu
+                    transaction.Rollback();
+                    Console.WriteLine($"Błąd podczas zapisywania alertów: {ex.Message}");
+                    return StatusCode(500, $"Error saving alerts: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd połączenia z bazą danych: {ex.Message}");
+                return StatusCode(500, $"Database connection error: {ex.Message}");
+            }
+        }
     }
 }

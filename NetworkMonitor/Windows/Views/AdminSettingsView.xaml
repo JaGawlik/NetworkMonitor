@@ -100,7 +100,7 @@
                 </StackPanel>
                 
                 <StackPanel>
-                    <TextBlock Text="Tworzenie nowej reguły Snorta" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <TextBlock Text="Tworzenie nowej reguły Snorta" FontSize="18" FontWeight="Bold" Margin="0,0,0,10" HorizontalAlignment="Center"/>
 
                     <!-- Wybór akcji -->
                     <StackPanel Orientation="Horizontal" Margin="0,5">
@@ -158,7 +158,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,5">
                         <TextBlock Text="SID: " VerticalAlignment="Center" Width="100"/>
                         <TextBox x:Name="SidTextBox" Width="100" Text="1000000" ToolTip="Unikalny identyfikator reguły (Signature ID). Musi być unikalny w lokalnych regułach, oraz z zasady wyższy niż 1000000"/>
-                        <TextBlock Text="Rev: " VerticalAlignment="Center" Width="50"/>
+                        <TextBlock Text="Rev: " VerticalAlignment="Center" Width="50" Margin="5,0,0,0"/>
                         <TextBox x:Name="RevTextBox" Width="50" Text="1" ToolTip="Numer wersji reguły. Zwiększaj przy jej aktualizacji."/>
                     </StackPanel>
 
