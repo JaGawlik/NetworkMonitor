@@ -8,10 +8,6 @@ namespace AlertApiServer
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Dodanie konfiguracji do dependency injection
-            //builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-            //builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-
             // Rejestracja kontrolerów
             builder.Services.AddControllers();
 
@@ -28,8 +24,6 @@ namespace AlertApiServer
                     listenOptions.UseHttps(); // HTTPS
                 });
             });
-
-            
 
             var app = builder.Build();
 
