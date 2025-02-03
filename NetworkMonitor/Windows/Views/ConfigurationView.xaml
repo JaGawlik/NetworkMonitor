@@ -35,7 +35,7 @@
                 </ComboBox>
                 <Button Content="Załaduj listę urządzeń" Click="LoadDevices_Click" HorizontalAlignment="Left" Margin="5,0,0,0" />
                 
-                <TextBlock Text="Ścieżka do pliku logów Snort:" FontWeight="Bold" Margin="5,0,5,0" />
+                <TextBlock Text="Ścieżka do pliku logów Snort:" FontWeight="Bold" Margin="5,5,5,0" />
                 <Grid Margin="0,5,0,15">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -59,9 +59,9 @@
                 
                 <Button Content="Zapisz ustawienia i Uruchom Snort" Click="SaveAndStartSnort_Click" Width="150" HorizontalAlignment="Left" Margin="5"/>
 
-                <Button Content="Konfiguruj Snort" Click="ConfigureSnort_Click" Width="150" HorizontalAlignment="Left" Margin="5"/>
+                <Button Content="Automatomatyczna konfiguracja Snorta" Click="ConfigureSnort_Click" Width="250" HorizontalAlignment="Left" Margin="5"/>
 
-                <Expander Header="Ustawienia Bazy Danych" FontWeight="Bold" IsExpanded="False" Margin="0,10,0,15">
+                <!--<Expander Header="Ustawienia Bazy Danych" FontWeight="Bold" IsExpanded="False" Margin="0,10,0,15">
                     <StackPanel Margin="20">
                         <TextBlock Text="Host:" FontWeight="Bold" Margin="5,0,5,0" />
                         <TextBox Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15" />
@@ -78,10 +78,10 @@
                         <TextBlock Text="Password:" FontWeight="Bold" Margin="5,0,5,0" />
                         <PasswordBox Margin="0,0,0,15" PasswordChanged="PasswordBox_PasswordChanged" />
                     </StackPanel>
-                </Expander>
+                </Expander>-->
 
-                <Button Content="Zapisz ustawienia" Width="150" HorizontalAlignment="Left" 
-                Click="SaveSettings_Clikc" />
+                <!--<Button Content="Zapisz ustawienia" Width="150" HorizontalAlignment="Left" 
+                Click="SaveSettings_Clikc" />-->
             </StackPanel>
         </ScrollViewer>
     </Grid>

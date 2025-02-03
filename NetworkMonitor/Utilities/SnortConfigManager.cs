@@ -4,12 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NetworkMonitor.AppConfiguration;
 
 namespace NetworkMonitor.Utilities
 {
     public static class SnortConfigManager
     {
         private static readonly string SnortConfigFilePath = Path.Combine(AppConfiguration.ConfigurationManager.GetSetting("SnortInstallationPath"), "etc", "snort.conf");
+
+        private static string snortPath = ConfigurationManager.GetSetting("SnortInstallationPath");
 
         public static Dictionary<string, string> LoadConfig()
         {
@@ -89,13 +92,17 @@ namespace NetworkMonitor.Utilities
         {
             ModifyConfigValue("ipvar HOME_NET", "any", "192.168.0.0/24");
             ModifyConfigValue("ipvar EXTERNAL_NET", "any", "!$HOME_NET");
-            ModifyConfigValue("var RULE_PATH", "../rules", "C:\\Snort\\rules");
-            ModifyConfigValue("var SO_RULE_PATH", "../so_rules", "# var SO_RULE_PATH ../so_rules");
-            ModifyConfigValue("var WHITE_LIST_PATH", "../rules", "C:\\Snort\\rules");
-            ModifyConfigValue("var BLACK_LIST_PATH", "../rules", "C:\\Snort\\rules");
-            ModifyConfigValue("config logdir:", "", "config logdir: C:\\Snort\\log");
-            ModifyConfigValue("dynamicpreprocessor directory", "/usr/local/lib/snort_dynamicpreprocessor/", "c:\\Snort\\lib\\snort_dynamicpreprocessor");
-            ModifyConfigValue("dynamicengine", "/usr/local/lib/snort_dynamicengine/libsf_engine.so", "c:\\Snort\\lib\\snort_dynamicengine\\sf_engine.dll");
+
+            ModifyConfigValue("var RULE_PATH", "../rules", snortPath + "\\rules");
+
+            ModifyConfigValue("var SO_RULE_PATH", "../so_rules", "# var SO_RULE_PATH ../so_rules");            
+
+            ModifyConfigValue("var WHITE_LIST_PATH", "../rules", snortPath + "\\rules");
+            ModifyConfigValue("var BLACK_LIST_PATH", "../rules", snortPath + "\\rules");
+            ModifyConfigValue("config logdir:", "", "config logdir: " + snortPath + "\\log");
+            ModifyConfigValue("dynamicpreprocessor directory", "/usr/local/lib/snort_dynamicpreprocessor/", snortPath +  "\\lib\\snort_dynamicpreprocessor");
+            ModifyConfigValue("dynamicengine", "/usr/local/lib/snort_dynamicengine/libsf_engine.so", snortPath + "\\lib\\snort_dynamicengine\\sf_engine.dll");
+
             ModifyConfigValue("dynamicdetection directory", "/usr/local/lib/snort_dynamicrules", "#dynamicdetection directory /usr/local/lib/snort_dynamicrules");
             ModifyConfigValue("preprocessor sfportscan: proto  { all } memcap { 10000000 } sense_level { low }",
                               "# preprocessor sfportscan: proto  { all } memcap { 10000000 } sense_level { low }",
