@@ -39,35 +39,28 @@ namespace NetworkMonitor.Utilities
 
         public static void ModifyConfigValue(string key, string oldValue, string newValue)
         {
-            if (!File.Exists(SnortConfigFilePath))
-            {
-                Console.WriteLine("Plik konfiguracyjny nie istnieje.");
-                return;
-            }
-
             var lines = File.ReadAllLines(SnortConfigFilePath).ToList();
             bool modified = false;
 
             for (int i = 0; i < lines.Count; i++)
             {
-                string trimmedLine = lines[i].Trim();
+                var line = lines[i];
 
-                if (trimmedLine == $"{key} {oldValue}" || trimmedLine == $"# {key} {oldValue}")
+                if (line.Contains(key) && line.Contains(oldValue))
                 {
-                    lines[i] = $"{key} {newValue}"; 
-                    modified = true;
-                    break; 
+                    var cleanLine = line.Trim().TrimEnd('\\').Trim();
+                   
+                    if (cleanLine.StartsWith($"{key} {oldValue}".Trim()))
+                    {
+                        lines[i] = $"{key} {newValue}".TrimEnd();
+                        modified = true;
+                    }
                 }
             }
 
             if (modified)
             {
                 File.WriteAllLines(SnortConfigFilePath, lines);
-                Console.WriteLine($"Podmieniono: {key} {oldValue} → {newValue}");
-            }
-            else
-            {
-                Console.WriteLine($"Nie znaleziono {key} {oldValue}, pominięto zmianę.");
             }
         }
 
@@ -104,7 +97,6 @@ namespace NetworkMonitor.Utilities
             ModifyConfigValue("dynamicpreprocessor directory", "/usr/local/lib/snort_dynamicpreprocessor/", "c:\\Snort\\lib\\snort_dynamicpreprocessor");
             ModifyConfigValue("dynamicengine", "/usr/local/lib/snort_dynamicengine/libsf_engine.so", "c:\\Snort\\lib\\snort_dynamicengine\\sf_engine.dll");
             ModifyConfigValue("dynamicdetection directory", "/usr/local/lib/snort_dynamicrules", "#dynamicdetection directory /usr/local/lib/snort_dynamicrules");
-            ModifyConfigValue("preprocessor bo", "", "#preprocessor bo");
             ModifyConfigValue("preprocessor sfportscan: proto  { all } memcap { 10000000 } sense_level { low }",
                               "# preprocessor sfportscan: proto  { all } memcap { 10000000 } sense_level { low }",
                               "preprocessor sfportscan: proto  { all } memcap { 10000000 } sense_level { low }");     
@@ -112,10 +104,11 @@ namespace NetworkMonitor.Utilities
             ModifyConfigValue("include", "$PREPROC_RULE_PATH/preprocessor.rules", "$PREPROC_RULE_PATH\\preprocessor.rules");
             ModifyConfigValue("include", "$PREPROC_RULE_PATH/decoder.rules", "$PREPROC_RULE_PATH\\decoder.rules");
             ModifyConfigValue("include", "$PREPROC_RULE_PATH/sensitive-data.rules", "$PREPROC_RULE_PATH\\sensitive-data.rules");
-            ModifyConfigValue("preprocessor reputation: ", "$WHITE_LIST_PATH/white_list.rules,", "$WHITE_LIST_PATH\\whitelist.rules,");
-            ModifyConfigValue("preprocessor reputation: ", "$BLACK_LIST_PATH/black_list.rules", "$BLACK_LIST_PATH\\blacklist.rules");
+            ModifyConfigValue("whitelist", "$WHITE_LIST_PATH/white_list.rules,", "$WHITE_LIST_PATH\\white_list.rules, \\");
+            ModifyConfigValue("blacklist", "$BLACK_LIST_PATH/black_list.rules", "$BLACK_LIST_PATH\\blacklist.rules");
             CommentOutConfigValue("var SO_RULE_PATH");
             CommentOutConfigValue("dynamicdetection directory");
+            CommentOutConfigValue("preprocessor bo");
         }
 
 
