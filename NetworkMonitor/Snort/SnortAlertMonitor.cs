@@ -29,13 +29,27 @@ internal class SnortAlertMonitor
             Console.WriteLine($"Plik logów Snorta nie istnieje: {_snortLogPath}");
             return;
         }
-             
-        _regex = new Regex(
-            @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
-            @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
-            @"(?<srcip>(?:[0-9]{1,3}(?:\.[0-9]{1,3}){3}|\[[0-9a-fA-F:]+\]|[0-9a-fA-F:]+))(?::(?<srcport>\d+))?\s->\s(?<dstip>(?:[0-9]{1,3}(?:\.[0-9]{1,3}){3}|\[[0-9a-fA-F:]+\]|[0-9a-fA-F:]+))(?::(?<dstport>\d+))?",
-            RegexOptions.Compiled
-        );
+
+            _regex = new Regex(
+                @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
+                @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
+                // Sekcja źródłowa (srcip i srcport)
+                @"(?<srcip>" +
+                    @"(?:\[(?<srcipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach (np. [::1])
+                    @"|(?<srcipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4 (np. 192.168.1.1)
+                    @"|(?<srcipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów (np. ::1)
+                @")" +
+                @"(?::(?<srcport>\d+))?" +                       // Port źródłowy (opcjonalny)
+                @"\s->\s" +
+                // Sekcja docelowa (dstip i dstport)
+                @"(?<dstip>" +
+                    @"(?:\[(?<dstipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach
+                    @"|(?<dstipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4
+                    @"|(?<dstipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów
+                @")" +
+                @"(?::(?<dstport>\d+))?",                        // Port docelowy (opcjonalny)
+                RegexOptions.Compiled
+            );
     }
 
 
@@ -86,11 +100,22 @@ internal class SnortAlertMonitor
             string priority = match.Groups["priority"].Value;
             string protocol = match.Groups["protocol"].Value;
 
-            string srcIp = match.Groups["srcip"].Value;
+            string srcIp = match.Groups["srcip"].Value.Trim('[', ']'); // Usuń nawiasy dla IPv6
             int? srcPort = match.Groups["srcport"].Success ? int.Parse(match.Groups["srcport"].Value) : null;
 
-            string dstIp = match.Groups["dstip"].Value;
+            // Jeśli regex nie wychwycił portu, użyj metody ExtractIpAndPort
+            if (srcPort == null)
+            {
+                (srcIp, srcPort) = ExtractIpAndPort(match.Groups["srcip"].Value);
+            }
+
+            // Analogicznie dla dstip i dstport
+            string dstIp = match.Groups["dstip"].Value.Trim('[', ']');
             int? dstPort = match.Groups["dstport"].Success ? int.Parse(match.Groups["dstport"].Value) : null;
+            if (dstPort == null)
+            {
+                (dstIp, dstPort) = ExtractIpAndPort(match.Groups["dstip"].Value);
+            }
 
             string sidString = match.Groups["sid"].Value.Split(':')[1];
             if (!int.TryParse(sidString, out int sid))
@@ -152,30 +177,35 @@ internal class SnortAlertMonitor
         if (string.IsNullOrWhiteSpace(ipWithPort))
             return (null, null);
 
-        // Obsługa IPv6 w nawiasach np. [fe80::1]:443
-        if (ipWithPort.Contains('['))
+        // Obsługa IPv6 w nawiasach (np. [fe80::1]:443)
+        if (ipWithPort.StartsWith("[") && ipWithPort.Contains("]"))
         {
-            var match = Regex.Match(ipWithPort, @"\[(?<ip>[0-9a-fA-F:.]+)\](:(?<port>\d+))?");
+            var match = Regex.Match(ipWithPort, @"^\[(?<ip>[0-9a-fA-F:]+)\](:(?<port>\d+))?$");
             if (match.Success)
             {
-                string ip = match.Groups["ip"].Value;
-                int? port = match.Groups["port"].Success ? int.Parse(match.Groups["port"].Value) : null;
-                return (ip, port);
+                return (match.Groups["ip"].Value, match.Groups["port"].Success ? int.Parse(match.Groups["port"].Value) : null);
             }
         }
-        else
+        // Obsługa IPv4 (np. 192.168.1.1:80)
+        else if (ipWithPort.Contains(".") && ipWithPort.Contains(":"))
         {
-            // Obsługa IPv4 i IPv6 bez nawiasów np. 8.8.8.8:443 lub fe80::1
-            var match = Regex.Match(ipWithPort, @"^(?<ip>[0-9a-fA-F:.]+)(?::(?<port>\d+))?$");
-            if (match.Success)
+            var parts = ipWithPort.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[1], out int port))
             {
-                string ip = match.Groups["ip"].Value;
-                int? port = match.Groups["port"].Success ? int.Parse(match.Groups["port"].Value) : null;
-                return (ip, port);
+                return (parts[0], port);
+            }
+        }
+        // Obsługa IPv6 bez nawiasów (np. fe80::1:443)
+        else if (ipWithPort.Contains(":"))
+        {
+            var lastColonIndex = ipWithPort.LastIndexOf(":");
+            if (lastColonIndex > 0 && int.TryParse(ipWithPort.Substring(lastColonIndex + 1), out int port))
+            {
+                return (ipWithPort.Substring(0, lastColonIndex), port);
             }
         }
 
-        // Jeśli nie udało się sparsować, zwracamy IP bez zmian (bez portu)
+        // Jeśli nie ma portu
         return (ipWithPort, null);
     }
 
