@@ -15,6 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using NetworkMonitor.AppConfiguration;
+using NetworkMonitor.Utilities;
 
 namespace NetworkMonitor.Windows.Views
 {
@@ -179,6 +180,18 @@ namespace NetworkMonitor.Windows.Views
             else
             {
                 MessageBox.Show("Błąd: brak powiązanego modelu widoku konfiguracji.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        private void ConfigureSnort_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {              
+                SnortConfigManager.ConfigureSnort();
+                MessageBox.Show("Konfiguracja Snort została zaktualizowana!", "Sukces", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Błąd podczas konfiguracji Snort: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
