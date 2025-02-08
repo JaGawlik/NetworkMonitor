@@ -30,26 +30,46 @@ internal class SnortAlertMonitor
             return;
         }
 
-            _regex = new Regex(
-                @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
-                @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
-                // Sekcja źródłowa (srcip i srcport)
-                @"(?<srcip>" +
-                    @"(?:\[(?<srcipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach (np. [::1])
-                    @"|(?<srcipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4 (np. 192.168.1.1)
-                    @"|(?<srcipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów (np. ::1)
-                @")" +
-                @"(?::(?<srcport>\d+))?" +                       // Port źródłowy (opcjonalny)
-                @"\s->\s" +
-                // Sekcja docelowa (dstip i dstport)
-                @"(?<dstip>" +
-                    @"(?:\[(?<dstipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach
-                    @"|(?<dstipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4
-                    @"|(?<dstipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów
-                @")" +
-                @"(?::(?<dstport>\d+))?",                        // Port docelowy (opcjonalny)
-                RegexOptions.Compiled
-            );
+        //_regex = new Regex(
+        //    @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]" +
+        //    @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
+        //    // Sekcja źródłowa (srcip i srcport)
+        //    @"(?<srcip>" +
+        //        @"(?:\[(?<srcipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach (np. [::1])
+        //        @"|(?<srcipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4 (np. 192.168.1.1)
+        //        @"|(?<srcipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów (np. ::1)
+        //    @")" +
+        //    @"(?::(?<srcport>\d+))?" +                       // Port źródłowy (opcjonalny)
+        //    @"\s->\s" +
+        //    // Sekcja docelowa (dstip i dstport)
+        //    @"(?<dstip>" +
+        //        @"(?:\[(?<dstipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach
+        //        @"|(?<dstipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4
+        //        @"|(?<dstipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów
+        //    @")" +
+        //    @"(?::(?<dstport>\d+))?",                        // Port docelowy (opcjonalny)
+        //    RegexOptions.Compiled
+        //);
+        _regex = new Regex(
+            @"(?<date>\d{2}/\d{2}-\d{2}:\d{2}:\d{2}\.\d+)\s+\[\*\*\]\s+\[(?<sid>\d+:\d+(:\d+)?)\]\s(?<message>.*?)\s\[\*\*\]\s*(?:\[\*\*\]\s*)*" +
+            @"(?:\s\[Classification:\s(?<classification>.*?)\])?\s\[Priority:\s(?<priority>\d+)\]\s\{(?<protocol>[A-Z0-9-]+)\}\s" +
+            // Sekcja źródłowa (srcip i srcport)
+            @"(?<srcip>" +
+                @"(?:\[(?<srcipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach (np. [::1])
+                @"|(?<srcipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4 (np. 192.168.1.1)
+                @"|(?<srcipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów (np. ::1)
+            @")" +
+            @"(?::(?<srcport>\d+))?" +                       // Port źródłowy (opcjonalny)
+            @"\s->\s" +
+            // Sekcja docelowa (dstip i dstport)
+            @"(?<dstip>" +
+                @"(?:\[(?<dstipv6>[0-9a-fA-F:]+)\]" +       // IPv6 w nawiasach
+                @"|(?<dstipv4>(?:\d{1,3}\.){3}\d{1,3})" +   // IPv4
+                @"|(?<dstipv6_loose>[0-9a-fA-F:]+))" +       // IPv6 bez nawiasów
+            @")" +
+            @"(?::(?<dstport>\d+))?",                        // Port docelowy (opcjonalny)
+            RegexOptions.Compiled
+        );
     }
 
 
