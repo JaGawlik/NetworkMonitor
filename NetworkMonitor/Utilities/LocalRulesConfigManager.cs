@@ -130,17 +130,52 @@ namespace NetworkMonitor.Utilities
         public string Message { get; set; }
         public int Sid { get; set; }
         public int Rev { get; set; }
+        public int? IType { get; set; }
+        public string ThresholdType { get; set; }
+        public string ThresholdTrack { get; set; }
+        public int? ThresholdCount { get; set; }
+        public int? ThresholdSeconds { get; set; }
+        public string Flags { get; set; }
+        public string DSize { get; set; }
+        public string DetectionTrack { get; set; }
+        public int? DetectionCount { get; set; }
+        public int? DetectionSeconds { get; set; }
+        public string Content { get; set; }
+        public int? Depth { get; set; }
+        public bool NoCase { get; set; }
 
         public string FormattedRule => ToString();
 
         public override string ToString()
         {
-            return $"{Action} {Protocol} {SourceIp} {SourcePort} {Direction} {DestinationIp} {DestinationPort} (msg:\"{Message}\"; sid:{Sid}; rev:{Rev};)";
+            var options = new List<string>
+        {
+            $"msg:\"{Message}\"",
+            $"sid:{Sid}",
+            $"rev:{Rev}"
+        };
+
+            if (IType.HasValue) options.Add($"itype:{IType}");
+            if (!string.IsNullOrEmpty(Flags)) options.Add($"flags:{Flags}");
+            if (!string.IsNullOrEmpty(DSize)) options.Add($"dsize:{DSize}");
+            if (!string.IsNullOrEmpty(Content)) options.Add($"content:\"{Content}\"");
+            if (Depth.HasValue) options.Add($"depth:{Depth}");
+            if (NoCase) options.Add("nocase");
+            if (!string.IsNullOrEmpty(ThresholdType))
+            {
+                options.Add($"threshold:type {ThresholdType}, track {ThresholdTrack}, count {ThresholdCount}, seconds {ThresholdSeconds}");
+            }
+            if (!string.IsNullOrEmpty(DetectionTrack))
+            {
+                options.Add($"detection_filter:track {DetectionTrack}, count {DetectionCount}, seconds {DetectionSeconds}");
+            }
+
+            return $"{Action} {Protocol} {SourceIp} {SourcePort} {Direction} {DestinationIp} {DestinationPort} ({string.Join("; ", options)});";
         }
 
         public static SnortLocalRule Parse(string ruleLine)
         {
-            var regexPattern = @"^(?<action>\w+)\s+(?<protocol>\w+)\s+(?<srcip>[^\s]+)\s+(?<srcport>[^\s]+)\s+(?<direction><>|->)\s+(?<dstip>[^\s]+)\s+(?<dstport>[^\s]+)\s+\(msg:""(?<message>[^""]+)"";\s+sid:(?<sid>\d+);\s+rev:(?<rev>\d+);?\)$";
+            var regexPattern = @"^(?<action>\w+)\s+(?<protocol>\w+)\s+(?<srcip>[^\s]+)\s+(?<srcport>[^\s]+)\s+(?<direction><>|->)\s+(?<dstip>[^\s]+)\s+(?<dstport>[^\s]+)\s+\((?<options>.+)\)$";
 
             var match = Regex.Match(ruleLine, regexPattern);
             if (!match.Success)
@@ -149,7 +184,19 @@ namespace NetworkMonitor.Utilities
                 return null;
             }
 
-            Console.WriteLine($"Reguła: {ruleLine}");
+            string options = match.Groups["options"].Value;
+
+            var msgMatch = Regex.Match(options, @"msg:\""(?<message>[^\""]+)\""");
+            var sidMatch = Regex.Match(options, @"sid:(?<sid>\d+)");
+            var revMatch = Regex.Match(options, @"rev:(?<rev>\d+)");
+            var itypeMatch = Regex.Match(options, @"itype:(?<itype>\d+)");
+            var thresholdMatch = Regex.Match(options, @"threshold:type (?<threshold_type>\w+), track (?<threshold_track>\w+), count (?<threshold_count>\d+), seconds (?<threshold_seconds>\d+)");
+            var flagsMatch = Regex.Match(options, @"flags:(?<flags>[^\s;]+)");
+            var dsizeMatch = Regex.Match(options, @"dsize:(?<dsize>[^\s;]+)");
+            var detectionFilterMatch = Regex.Match(options, @"detection_filter:track (?<detection_track>\w+), count (?<detection_count>\d+), seconds (?<detection_seconds>\d+)");
+            var contentMatch = Regex.Match(options, @"content:\""(?<content>[^\""]+)\""");
+            var depthMatch = Regex.Match(options, @"depth:(?<depth>\d+)");
+            var nocaseMatch = Regex.Match(options, @"nocase");
 
             return new SnortLocalRule
             {
@@ -160,11 +207,25 @@ namespace NetworkMonitor.Utilities
                 Direction = match.Groups["direction"].Value,
                 DestinationIp = match.Groups["dstip"].Value,
                 DestinationPort = match.Groups["dstport"].Value,
-                Message = match.Groups["message"].Value,
-                Sid = int.Parse(match.Groups["sid"].Value),
-                Rev = int.Parse(match.Groups["rev"].Value)
+                Message = msgMatch.Success ? msgMatch.Groups["message"].Value : "",
+                Sid = sidMatch.Success ? int.Parse(sidMatch.Groups["sid"].Value) : 0,
+                Rev = revMatch.Success ? int.Parse(revMatch.Groups["rev"].Value) : 0,
+                IType = itypeMatch.Success ? int.Parse(itypeMatch.Groups["itype"].Value) : (int?)null,
+                ThresholdType = thresholdMatch.Success ? thresholdMatch.Groups["threshold_type"].Value : "",
+                ThresholdTrack = thresholdMatch.Success ? thresholdMatch.Groups["threshold_track"].Value : "",
+                ThresholdCount = thresholdMatch.Success ? int.Parse(thresholdMatch.Groups["threshold_count"].Value) : (int?)null,
+                ThresholdSeconds = thresholdMatch.Success ? int.Parse(thresholdMatch.Groups["threshold_seconds"].Value) : (int?)null,
+                Flags = flagsMatch.Success ? flagsMatch.Groups["flags"].Value : "",
+                DSize = dsizeMatch.Success ? dsizeMatch.Groups["dsize"].Value : "",
+                DetectionTrack = detectionFilterMatch.Success ? detectionFilterMatch.Groups["detection_track"].Value : "",
+                DetectionCount = detectionFilterMatch.Success ? int.Parse(detectionFilterMatch.Groups["detection_count"].Value) : (int?)null,
+                DetectionSeconds = detectionFilterMatch.Success ? int.Parse(detectionFilterMatch.Groups["detection_seconds"].Value) : (int?)null,
+                Content = contentMatch.Success ? contentMatch.Groups["content"].Value : "",
+                Depth = depthMatch.Success ? int.Parse(depthMatch.Groups["depth"].Value) : (int?)null,
+                NoCase = nocaseMatch.Success
             };
         }
+
     }
 
 }
